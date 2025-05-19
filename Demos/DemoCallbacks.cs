@@ -57,18 +57,20 @@ public struct DemoPoseIntegratorCallbacks : IPoseIntegratorCallbacks
     /// <param name="gravity">Gravity to apply to dynamic bodies in the simulation.</param>
     /// <param name="linearDamping">Fraction of dynamic body linear velocity to remove per unit of time. Values range from 0 to 1. 0 is fully undamped, while values very close to 1 will remove most velocity.</param>
     /// <param name="angularDamping">Fraction of dynamic body angular velocity to remove per unit of time. Values range from 0 to 1. 0 is fully undamped, while values very close to 1 will remove most velocity.</param>
-    public DemoPoseIntegratorCallbacks(Vector3 gravity, float linearDamping = 0, float angularDamping = 0) : this()
+    /// <param name="gravityValue"></param>
+    public DemoPoseIntegratorCallbacks(Vector3 gravity, float linearDamping = 0, float angularDamping = 0, float gravityValue = 100000) : this()
     {
         Gravity = gravity;
         LinearDamping = linearDamping;
         AngularDamping = angularDamping;
+        GravityValue = gravityValue;
     }
 
     Vector3Wide gravityWideDt;
     Vector<float> linearDampingDt;
     Vector<float> angularDampingDt;
     float gravityDt;
-    float gravityValue = 100000;
+    public readonly float GravityValue = 100000;
     // float gravityValue = 0;
     private Vector3 PlanetCenter => Gravity;
 
@@ -87,7 +89,7 @@ public struct DemoPoseIntegratorCallbacks : IPoseIntegratorCallbacks
         linearDampingDt = new Vector<float>(MathF.Pow(MathHelper.Clamp(1 - LinearDamping, 0, 1), dt));
         angularDampingDt = new Vector<float>(MathF.Pow(MathHelper.Clamp(1 - AngularDamping, 0, 1), dt));
         gravityWideDt = Vector3Wide.Broadcast(Gravity * dt);
-        gravityDt = dt * gravityValue;
+        gravityDt = dt * GravityValue;
     }
 
     /// <summary>

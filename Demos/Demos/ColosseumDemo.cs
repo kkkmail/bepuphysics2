@@ -40,8 +40,10 @@ public class ColosseumDemo : Demo
         for (int i = 0; i < boxCount; i++)
         {
             var angle = i * increment;
-            bodyDescription.Pose = (position + new Vector3(-MathF.Cos(angle) * radius, ringBoxShape.HalfWidth, MathF.Sin(angle) * radius),
-                QuaternionEx.Concatenate(QuaternionEx.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * 0.5f), QuaternionEx.CreateFromAxisAngle(Vector3.UnitY, angle + MathF.PI * 0.5f)));
+            bodyDescription.Pose = (
+                position + new Vector3(-MathF.Cos(angle) * radius, ringBoxShape.HalfWidth, MathF.Sin(angle) * radius),
+                QuaternionEx.Concatenate(QuaternionEx.CreateFromAxisAngle(Vector3.UnitZ, MathF.PI * 0.5f),
+                    QuaternionEx.CreateFromAxisAngle(Vector3.UnitY, angle + MathF.PI * 0.5f)));
             simulation.Bodies.Add(bodyDescription);
         }
     }
@@ -56,6 +58,7 @@ public class ColosseumDemo : Demo
             CreateRingPlatform(simulation, position + new Vector3(0, heightPerPlatformLevel * ringBoxShape.Height, 0), ringBoxShape, bodyDescription, radius);
             position.Y += heightPerPlatformLevel * ringBoxShape.Height + ringBoxShape.Width;
         }
+
         return position;
     }
 
@@ -104,6 +107,9 @@ public class ColosseumDemo : Demo
         // var orbiterMass = 100.0f;
 
         // =================================================
+        var gravityValue = 100000.0f;
+
+        // var frictionCoefficient = 0.0f;
 
         // Seems OK but over anti-damped. 0.25 is not enough.
         // var frequency = 5.0f;
@@ -122,15 +128,47 @@ public class ColosseumDemo : Demo
         // var orbiterRadius = 1.0f;
         // var orbiterMass = 1.0f;
 
+        // WTF?
+        // var frequency = 5.0f;
+        // var dampingRatio = -0.26f;
+        // var orbiterRadius = 1.0f;
+        // var orbiterMass = 1.0f;
+
+        // Deep freeze.
+        // var frequency = 5.0f;
+        // var dampingRatio = -0.25f;
+        // var orbiterRadius = 1.0f;
+        // var orbiterMass = 1.0f;
+
+        // Good enough.
+        // var frequency = 5.0f;
+        // var dampingRatio = -0.2625f;
+        // var orbiterRadius = 1.0f;
+        // var orbiterMass = 1.0f;
+
+        // =================================================
+
+        // Stable
+        var frictionCoefficient = 1.0f;
         var frequency = 5.0f;
-        var dampingRatio = -0.26f;
+        var dampingRatio = -0.375f;
         var orbiterRadius = 1.0f;
         var orbiterMass = 1.0f;
 
         // Simulation = Simulation.Create(BufferPool, new DemoNarrowPhaseCallbacks(new SpringSettings(30, 0)), new DemoPoseIntegratorCallbacks(new Vector3(0, -10, 0)), new SolveDescription(8, 1));
         // Simulation = Simulation.Create(BufferPool, new DemoNarrowPhaseCallbacks(new SpringSettings(30, 0)), new DemoPoseIntegratorCallbacks(new Vector3()), new SolveDescription(8, 1));
         // Simulation = Simulation.Create(BufferPool, new DemoNarrowPhaseCallbacks(new SpringSettings(30, 0)), new DemoPoseIntegratorCallbacks(new Vector3()), new SolveDescription(8, 1));
-        Simulation = Simulation.Create(BufferPool, new DemoNarrowPhaseCallbacks(new SpringSettings(frequency, dampingRatio)), new DemoPoseIntegratorCallbacks(new Vector3()), new SolveDescription(8, 1));
+        Simulation = Simulation.Create(BufferPool,
+            new DemoNarrowPhaseCallbacks(
+                new SpringSettings(frequency, dampingRatio),
+                maximumRecoveryVelocity: float.MaxValue,
+                frictionCoefficient: frictionCoefficient),
+            new DemoPoseIntegratorCallbacks(
+                new Vector3(),
+                linearDamping: 0f,
+                angularDamping: 0f,
+                gravityValue: gravityValue),
+            new SolveDescription(8, 1));
 
         // var ringBoxShape = new Box(0.5f, 1, 3);
         // var boxDescription = BodyDescription.CreateDynamic(new Vector3(), ringBoxShape.ComputeInertia(1), Simulation.Shapes.Add(ringBoxShape), 0.01f);
@@ -205,6 +243,7 @@ public class ColosseumDemo : Demo
 
     BodyDescription bulletDescription;
     BodyDescription shootiePatootieDescription;
+
     public override void Update(Window window, Camera camera, Input input, float dt)
     {
         if (input != null)
@@ -222,6 +261,7 @@ public class ColosseumDemo : Demo
                 Simulation.Bodies.Add(shootiePatootieDescription);
             }
         }
+
         base.Update(window, camera, input, dt);
     }
 
