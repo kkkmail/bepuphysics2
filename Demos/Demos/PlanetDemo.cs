@@ -22,7 +22,7 @@ public class PlanetDemo : Demo
         public Vector3 PlanetCenter;
         public float Gravity;
 
-        public readonly AngularIntegrationMode AngularIntegrationMode => AngularIntegrationMode.Nonconserving;
+        public readonly AngularIntegrationMode AngularIntegrationMode => AngularIntegrationMode.ConserveMomentum;
 
         public readonly bool AllowSubstepsForUnconstrainedBodies => false;
 
@@ -54,29 +54,35 @@ public class PlanetDemo : Demo
         camera.Yaw = 0;
         camera.Pitch = MathF.PI * -0.5f;
 
-        Simulation = Simulation.Create(BufferPool, new DemoNarrowPhaseCallbacks(new SpringSettings(30, 1)), new PlanetaryGravityCallbacks() { PlanetCenter = new Vector3(), Gravity = 100000 }, new SolveDescription(4, 1));
+        // Simulation = Simulation.Create(BufferPool, new DemoNarrowPhaseCallbacks(new SpringSettings(30, 0), float.MaxValue, 0), new PlanetaryGravityCallbacks { PlanetCenter = new Vector3(), Gravity = 100000 }, new SolveDescription(8, 1));
+        Simulation = Simulation.Create(BufferPool, new DemoNarrowPhaseCallbacks(new SpringSettings(30, 0), float.MaxValue, 0), new PlanetaryGravityCallbacks { PlanetCenter = new Vector3(), Gravity = 100000 }, new SolveDescription(8, 1));
 
-        Simulation.Statics.Add(new StaticDescription(new Vector3(), Simulation.Shapes.Add(new Sphere(50))));
+        var planet = new Sphere(50);
+        Simulation.Statics.Add(new StaticDescription(new Vector3(), Simulation.Shapes.Add(planet)));
+        // var planetInertia = planet.ComputeInertia(1_000_000_000_000);
+        // var planetShapeIndex = Simulation.Shapes.Add(planet);
+        // Simulation.Bodies.Add(BodyDescription.CreateDynamic(new Vector3(), new Vector3(), planetInertia, planetShapeIndex, 0.01f));
 
         var orbiter = new Sphere(1f);
-        var inertia = orbiter.ComputeInertia(1);
+        var inertia = orbiter.ComputeInertia(1f);
         var orbiterShapeIndex = Simulation.Shapes.Add(orbiter);
         var spacing = new Vector3(5);
-        const int length = 40;
+        // const int length = 40;
+        const int length = 1;
         for (int i = 0; i < length; ++i)
         {
             for (int j = 0; j < 20; ++j)
             {
-                const int width = 40;
+                // const int width = 40;
+                const int width = 1;
                 var origin = new Vector3(-50, 95, 0) + spacing * new Vector3(length * -0.5f, 0, width * -0.5f);
                 for (int k = 0; k < width; ++k)
                 {
                     Simulation.Bodies.Add(BodyDescription.CreateDynamic(
-                        origin + new Vector3(i, j, k) * spacing, new Vector3(30, 0, 0), inertia, orbiterShapeIndex, 0.01f));
+                        origin + new Vector3(i, j, k) * spacing, new Vector3(), inertia, orbiterShapeIndex, 0.01f));
                 }
             }
         }
-
     }
 
     public override void Render(Renderer renderer, Camera camera, Input input, TextBuilder text, Font font)
