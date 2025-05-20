@@ -44,35 +44,37 @@ public class DemoSet
 
     public DemoSet()
     {
-        AddOption<CarDemo>();
-        AddOption<TankDemo>();
-        AddOption<CharacterDemo>();
-        AddOption<RagdollTubeDemo>();
-        AddOption<PyramidDemo>();
-        AddOption<ColosseumDemo>();
-        AddOption<NewtDemo>();
-        AddOption<ClothDemo>();
-        AddOption<DancerDemo>();
-        AddOption<PlumpDancerDemo>();
-        AddOption<ContinuousCollisionDetectionDemo>();
-        AddOption<PlanetDemo>();
-        AddOption<PerBodyGravityDemo>();
-        AddOption<CompoundDemo>();
-        AddOption<RopeStabilityDemo>();
-        AddOption<SubsteppingDemo>();
-        AddOption<ChainFountainDemo>();
-        AddOption<RopeTwistDemo>();
-        AddOption<FrictionDemo>();
-        AddOption<BouncinessDemo>();
-        AddOption<RayCastingDemo>();
-        AddOption<SweepDemo>();
-        AddOption<ContactEventsDemo>();
-        AddOption<CollisionTrackingDemo>();
-        AddOption<CollisionQueryDemo>();
-        AddOption<SolverContactEnumerationDemo>();
-        AddOption<CustomVoxelCollidableDemo>();
-        AddOption<BlockChainDemo>();
-        AddOption<SponsorDemo>();
+        AddOption<PlanetNonRotatingMoleculesDemo>();
+        AddOption<PlanetOneDimensionalMoleculesDemo>();
+        // AddOption<CarDemo>();
+        // AddOption<TankDemo>();
+        // AddOption<CharacterDemo>();
+        // AddOption<RagdollTubeDemo>();
+        // AddOption<PyramidDemo>();
+        // AddOption<ColosseumDemo>();
+        // AddOption<NewtDemo>();
+        // AddOption<ClothDemo>();
+        // AddOption<DancerDemo>();
+        // AddOption<PlumpDancerDemo>();
+        // AddOption<ContinuousCollisionDetectionDemo>();
+        // AddOption<PlanetDemo>();
+        // AddOption<PerBodyGravityDemo>();
+        // AddOption<CompoundDemo>();
+        // AddOption<RopeStabilityDemo>();
+        // AddOption<SubsteppingDemo>();
+        // AddOption<ChainFountainDemo>();
+        // AddOption<RopeTwistDemo>();
+        // AddOption<FrictionDemo>();
+        // AddOption<BouncinessDemo>();
+        // AddOption<RayCastingDemo>();
+        // AddOption<SweepDemo>();
+        // AddOption<ContactEventsDemo>();
+        // AddOption<CollisionTrackingDemo>();
+        // AddOption<CollisionQueryDemo>();
+        // AddOption<SolverContactEnumerationDemo>();
+        // AddOption<CustomVoxelCollidableDemo>();
+        // AddOption<BlockChainDemo>();
+        // AddOption<SponsorDemo>();
     }
 
     public int Count { get { return options.Count; } }

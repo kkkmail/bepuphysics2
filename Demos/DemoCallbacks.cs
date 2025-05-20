@@ -28,12 +28,12 @@ public struct DemoPoseIntegratorCallbacks : IPoseIntegratorCallbacks
     /// <summary>
     /// Gets how the pose integrator should handle angular velocity integration.
     /// </summary>
-    public readonly AngularIntegrationMode AngularIntegrationMode => AngularIntegrationMode.ConserveMomentum;
+    public readonly AngularIntegrationMode AngularIntegrationMode => AngularIntegrationMode.Nonconserving;
 
     /// <summary>
     /// Gets whether the integrator should use substepping for unconstrained bodies when using a substepping solver.
     /// If true, unconstrained bodies will be integrated with the same number of substeps as the constrained bodies in the solver.
-    /// If false, unconstrained bodies use a single step of length equal to the dt provided to Simulation.Timestep.
+    /// If false, unconstrained bodies use a single step of length equal to the dt provided to Simulation.Timestep. 
     /// </summary>
     public readonly bool AllowSubstepsForUnconstrainedBodies => false;
 
@@ -57,28 +57,22 @@ public struct DemoPoseIntegratorCallbacks : IPoseIntegratorCallbacks
     /// <param name="gravity">Gravity to apply to dynamic bodies in the simulation.</param>
     /// <param name="linearDamping">Fraction of dynamic body linear velocity to remove per unit of time. Values range from 0 to 1. 0 is fully undamped, while values very close to 1 will remove most velocity.</param>
     /// <param name="angularDamping">Fraction of dynamic body angular velocity to remove per unit of time. Values range from 0 to 1. 0 is fully undamped, while values very close to 1 will remove most velocity.</param>
-    /// <param name="gravityValue"></param>
-    public DemoPoseIntegratorCallbacks(Vector3 gravity, float linearDamping = 0, float angularDamping = 0, float gravityValue = 100000) : this()
+    public DemoPoseIntegratorCallbacks(Vector3 gravity, float linearDamping = .03f, float angularDamping = .03f) : this()
     {
         Gravity = gravity;
         LinearDamping = linearDamping;
         AngularDamping = angularDamping;
-        GravityValue = gravityValue;
     }
 
     Vector3Wide gravityWideDt;
     Vector<float> linearDampingDt;
     Vector<float> angularDampingDt;
-    float gravityDt;
-    public readonly float GravityValue = 100000;
-    // float gravityValue = 0;
-    private Vector3 PlanetCenter => Gravity;
 
     /// <summary>
     /// Callback invoked ahead of dispatches that may call into <see cref="IntegrateVelocity"/>.
     /// It may be called more than once with different values over a frame. For example, when performing bounding box prediction, velocity is integrated with a full frame time step duration.
     /// During substepped solves, integration is split into substepCount steps, each with fullFrameDuration / substepCount duration.
-    /// The final integration pass for unconstrained bodies may be either fullFrameDuration or fullFrameDuration / substepCount, depending on the value of AllowSubstepsForUnconstrainedBodies.
+    /// The final integration pass for unconstrained bodies may be either fullFrameDuration or fullFrameDuration / substepCount, depending on the value of AllowSubstepsForUnconstrainedBodies. 
     /// </summary>
     /// <param name="dt">Current integration time step duration.</param>
     /// <remarks>This is typically used for precomputing anything expensive that will be used across velocity integration.</remarks>
@@ -89,7 +83,6 @@ public struct DemoPoseIntegratorCallbacks : IPoseIntegratorCallbacks
         linearDampingDt = new Vector<float>(MathF.Pow(MathHelper.Clamp(1 - LinearDamping, 0, 1), dt));
         angularDampingDt = new Vector<float>(MathF.Pow(MathHelper.Clamp(1 - AngularDamping, 0, 1), dt));
         gravityWideDt = Vector3Wide.Broadcast(Gravity * dt);
-        gravityDt = dt * GravityValue;
     }
 
     /// <summary>
@@ -111,13 +104,8 @@ public struct DemoPoseIntegratorCallbacks : IPoseIntegratorCallbacks
         //Note that these are SIMD operations and "Wide" types. There are Vector<float>.Count lanes of execution being evaluated simultaneously.
         //The types are laid out in array-of-structures-of-arrays (AOSOA) format. That's because this function is frequently called from vectorized contexts within the solver.
         //Transforming to "array of structures" (AOS) format for the callback and then back to AOSOA would involve a lot of overhead, so instead the callback works on the AOSOA representation directly.
-
-        // velocity.Linear = (velocity.Linear + gravityWideDt) * linearDampingDt;
-        // velocity.Angular = velocity.Angular * angularDampingDt;
-
-        var offset = position - Vector3Wide.Broadcast(PlanetCenter);
-        var distance = offset.Length();
-        velocity.Linear -= new Vector<float>(gravityDt) * offset / Vector.Max(Vector<float>.One, distance * distance * distance);
+        velocity.Linear = (velocity.Linear + gravityWideDt) * linearDampingDt;
+        velocity.Angular = velocity.Angular * angularDampingDt;
     }
 }
 public struct DemoNarrowPhaseCallbacks : INarrowPhaseCallbacks
@@ -126,8 +114,7 @@ public struct DemoNarrowPhaseCallbacks : INarrowPhaseCallbacks
     public float MaximumRecoveryVelocity;
     public float FrictionCoefficient;
 
-// public DemoNarrowPhaseCallbacks(SpringSettings contactSpringiness, float maximumRecoveryVelocity = 2f, float frictionCoefficient = 1f)
-public DemoNarrowPhaseCallbacks(SpringSettings contactSpringiness, float maximumRecoveryVelocity = float.MaxValue, float frictionCoefficient = 0)
+    public DemoNarrowPhaseCallbacks(SpringSettings contactSpringiness, float maximumRecoveryVelocity = 2f, float frictionCoefficient = 1f)
     {
         ContactSpringiness = contactSpringiness;
         MaximumRecoveryVelocity = maximumRecoveryVelocity;
@@ -139,10 +126,9 @@ public DemoNarrowPhaseCallbacks(SpringSettings contactSpringiness, float maximum
         //Use a default if the springiness value wasn't initialized... at least until struct field initializers are supported outside of previews.
         if (ContactSpringiness.AngularFrequency == 0 && ContactSpringiness.TwiceDampingRatio == 0)
         {
-            // ContactSpringiness = new(30, 0);
-            ContactSpringiness = new(300, 0);
-            MaximumRecoveryVelocity = float.MaxValue;
-            FrictionCoefficient = 0;
+            ContactSpringiness = new(30, 1);
+            MaximumRecoveryVelocity = 2f;
+            FrictionCoefficient = 1f;
         }
     }
 

@@ -38,7 +38,7 @@ public class NewtonsCradleDemo : Demo
         var ballShape = new Sphere(ballRadius);
         var ballShapeIndex = Simulation.Shapes.Add(ballShape);
         var ballInertia = ballShape.ComputeInertia(1);
-        var ballConstraintSpringSettings = new SpringSettings(30, 0);
+        var ballConstraintSpringSettings = new SpringSettings(300, 1);
         for (int i = 0; i < ballCount; ++i)
         {
             var ballPosition = new Vector3(ballRadius + i * (ballSpacing + ballRadius * 2), 0, 0);
