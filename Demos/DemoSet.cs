@@ -44,9 +44,18 @@ public class DemoSet
 
     public DemoSet()
     {
+        #region New
+
         AddOption<PlanetNonRotatingMoleculesDemo>();
         AddOption<PlanetOneDimensionalMoleculesDemo>();
         AddOption<PlanetBrickMoleculesDemo>();
+        AddOption<CarDemo>();
+        AddOption<CustomVoxelCollidableDemo>();
+        AddOption<PerBodyGravityDemo>();
+
+        #endregion
+
+        #region Originial
 
         // AddOption<CarDemo>();
         // AddOption<TankDemo>();
@@ -77,6 +86,8 @@ public class DemoSet
         // AddOption<CustomVoxelCollidableDemo>();
         // AddOption<BlockChainDemo>();
         // AddOption<SponsorDemo>();
+
+        #endregion
     }
 
     public int Count { get { return options.Count; } }

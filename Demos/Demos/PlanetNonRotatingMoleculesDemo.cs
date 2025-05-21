@@ -8,6 +8,7 @@ using DemoRenderer.UI;
 using DemoUtilities;
 using System;
 using System.Numerics;
+using DemoRenderer.ShapeDrawing;
 
 namespace Demos.Demos;
 
@@ -17,6 +18,10 @@ namespace Demos.Demos;
 /// </summary>
 public class PlanetNonRotatingMoleculesDemo : Demo
 {
+    public StaticHandle PlanetHandle;
+    public float PlanetRadius;
+    public Vector3 PlanetCenter;
+
     struct PlanetaryGravityCallbacks : IPoseIntegratorCallbacks
     {
         public Vector3 PlanetCenter;
@@ -70,9 +75,12 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         var orbiterRadius = 1.0f;
         var orbiterMass = 1.0f;
 
-        const int length = 40;
-        const int width = 40;
-        const int height = 40;
+        const int count = 40;
+        // const int count = 1;
+
+        const int length = count;
+        const int width = count;
+        const int height = count;
 
         var mainOrigin = new Vector3(-200, 300, 0);
         // var mainVelocity = new Vector3(30, 0, 0);
@@ -81,15 +89,27 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
         #endregion
 
+        PlanetCenter = new Vector3();
+
         Simulation = Simulation.Create(BufferPool,
             new DemoNarrowPhaseCallbacks(
                 new SpringSettings(frequency, dampingRatio),
                 maximumRecoveryVelocity: maximumRecoveryVelocity,
                 frictionCoefficient: frictionCoefficient),
-            new PlanetaryGravityCallbacks { PlanetCenter = new Vector3(), Gravity = gravityValue },
+            new PlanetaryGravityCallbacks { PlanetCenter = PlanetCenter, Gravity = gravityValue },
             new SolveDescription(8, 1));
 
-        Simulation.Statics.Add(new StaticDescription(new Vector3(), Simulation.Shapes.Add(new Sphere(50))));
+        #region Planet
+
+        PlanetRadius = 50;
+        PlanetHandle = Simulation.Statics.Add(new StaticDescription(PlanetCenter, Simulation.Shapes.Add(new Sphere(PlanetRadius))));
+        // Simulation.Statics.Add(new StaticDescription(new Vector3(), Simulation.Shapes.Add(new Cylinder(20, 100))));
+
+        // var sphereShape = new Sphere(50);
+        // var material = new DefaultMaterial { Color = new Vector4(1, 1, 1, 0.5f) }; // RGBA: A=0.5 for 50% transparency
+        // Simulation.Statics.Add(new StaticDescription(new Vector3(), Simulation.Shapes.Add(sphereShape), material));
+
+        #endregion
 
         var orbiter = new Sphere(orbiterRadius);
         var inertia = orbiter.ComputeInertia(orbiterMass);
@@ -123,6 +143,31 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         renderer.TextBatcher.Write(
             text.Clear().Append("In this demo, all bodies are pulled towards the center of the planet."),
             new Vector2(16, bottomY - 16), 16, Vector3.One, font);
+
+        var deviceContext = renderer.Surface.Context;
+        var surface = renderer.Surface;
+        var planetStatic = Simulation.Statics.GetDescription(PlanetHandle);
+        DemoRenderer.Helpers.PackOrientation(planetStatic.Pose.Orientation, out var packedOrientation);
+        var color = new Vector3(100, 100, 100);
+
+        // var shapeIndex = planetStatic.Shape.Index;
+        // var shape = Simulation.Shapes[shapeIndex];
+
+        // var sphere = (Sphere)shape;
+
+        // if (shape is Sphere sphere)
+        // {
+        // var instance = new SphereInstance(planetStatic.Pose, new Vector3(0.8f, 0.8f, 0.8f)); // Gray color
+
+        var instance = new SphereInstance
+        {
+            Position = PlanetCenter,
+            Radius = PlanetRadius + 100,
+            PackedOrientation = packedOrientation,
+            PackedColor = DemoRenderer.Helpers.PackColor(color),
+        };
+
+        renderer.SphereRenderer.Render(deviceContext, camera, surface.Resolution, [instance], 0, 1);
         base.Render(renderer, camera, input, text, font);
     }
 }

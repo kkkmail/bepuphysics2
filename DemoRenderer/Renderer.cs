@@ -17,7 +17,7 @@ namespace DemoRenderer
         public RenderSurface Surface { get; private set; }
         public ShaderCache ShaderCache { get; private set; }
         public BackgroundRenderer Background { get; private set; }
-        //TODO: Down the road, the sphere renderer will be joined by a bunch of other types. 
+        //TODO: Down the road, the sphere renderer will be joined by a bunch of other types.
         //They'll likely be stored in an array indexed by a shape type rather than just being a swarm of properties.
         public RayTracedRenderer<SphereInstance> SphereRenderer { get; private set; }
         public RayTracedRenderer<CapsuleInstance> CapsuleRenderer { get; private set; }
@@ -43,7 +43,7 @@ namespace DemoRenderer
 
         Texture2D depthBuffer;
         DepthStencilView dsv;
-        //Technically we could get away with rendering directly to the backbuffer, but a dedicated color buffer simplifies some things- 
+        //Technically we could get away with rendering directly to the backbuffer, but a dedicated color buffer simplifies some things-
         //you aren't bound by the requirements of the swapchain's buffer during rendering, and post processing is nicer.
         //Not entirely necessary for the demos, but hey, you could add tonemapping if you wanted?
         Texture2D colorBuffer;
@@ -200,7 +200,7 @@ namespace DemoRenderer
 
             rtv = new RenderTargetView(Surface.Device, colorBuffer);
             rtv.DebugName = "Color RTV";
-            
+
             description.SampleDescription = new SampleDescription(1, 0);
             resolvedColorBuffer = new Texture2D(Surface.Device, description);
             resolvedColorBuffer.DebugName = "Resolved Color Buffer";
@@ -233,7 +233,48 @@ namespace DemoRenderer
 
             //All ray traced shapes use analytic coverage writes to get antialiasing.
             context.OutputMerger.SetBlendState(a2cBlendState);
+
+            #region Spheres
+
+            #region Original
+
+            // SphereRenderer.Render(context, camera, Surface.Resolution, Shapes.ShapeCache.Spheres.Span, 0, Shapes.ShapeCache.Spheres.Count);
+
+            #endregion
+
+            #region V1 - Insanely slow
+
+            // var spheres = Shapes.ShapeCache.Spheres;
+            //
+            // for (var i = 0; i < Shapes.ShapeCache.Spheres.Count; i++)
+            // {
+            //     var sphere = spheres[i];
+            //     SphereRenderer.Render(context, camera, Surface.Resolution, [sphere], 0, 1);
+            // }
+
+            #endregion
+
+            #region V2
+
+            unsafe
+            {
+                for (var i = 0; i < Shapes.ShapeCache.Spheres.Count; i++)
+                {
+                    var sphere = Shapes.ShapeCache.Spheres.Span.GetPointer(i);
+
+                    if ((*sphere).Radius > 2)
+                    {
+                        (*sphere).PackedColor = 0;
+                    }
+                }
+            }
+
             SphereRenderer.Render(context, camera, Surface.Resolution, Shapes.ShapeCache.Spheres.Span, 0, Shapes.ShapeCache.Spheres.Count);
+
+            #endregion
+
+            #endregion
+
             CapsuleRenderer.Render(context, camera, Surface.Resolution, Shapes.ShapeCache.Capsules.Span, 0, Shapes.ShapeCache.Capsules.Count);
             CylinderRenderer.Render(context, camera, Surface.Resolution, Shapes.ShapeCache.Cylinders.Span, 0, Shapes.ShapeCache.Cylinders.Count);
 
