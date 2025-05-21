@@ -46,6 +46,8 @@ public class DemoSet
     {
         AddOption<PlanetNonRotatingMoleculesDemo>();
         AddOption<PlanetOneDimensionalMoleculesDemo>();
+        AddOption<PlanetBrickMoleculesDemo>();
+
         // AddOption<CarDemo>();
         // AddOption<TankDemo>();
         // AddOption<CharacterDemo>();
