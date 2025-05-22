@@ -264,7 +264,11 @@ namespace DemoRenderer
 
                     if ((*sphere).Radius > 2)
                     {
-                        (*sphere).PackedColor = 0;
+                        // (*sphere).PackedColor = 0xFFFFFF00;
+                        // (*sphere).PackedColor = 0xFFFFFFFF;
+                        // (*sphere).PackedColor = 0x80FFFFFF;
+                        // (*sphere).PackedColor = 0xFFFFFF20;
+                        (*sphere).PackedColor = 0xFFFFFF00;
                     }
                 }
             }

@@ -33,7 +33,7 @@ struct PSInput
 };
 PSInput VSMain(uint vertexId : SV_VertexId)
 {
-	//The vertex id is used to position each vertex. 
+	//The vertex id is used to position each vertex.
 	//Each AABB has 8 vertices; the position is based on the 3 least significant bits.
 	int instanceId = vertexId >> 3;
 	PSInput output;
@@ -123,6 +123,22 @@ PSOutput PSMain(PSInput input)
 		float3 closestPointOnRay;
 		float signedDistance = GetSignedDistance(direction, input.Sphere.Position, input.Sphere.Radius, closestPointOnRay);
 		output.Color = float4(color, GetCoverage(signedDistance, PixelSizeAtUnitPlane, -dot(closestPointOnRay, CameraBackwardPS)));
+
+		if (input.Sphere.Radius > 2.0)
+		{
+			float originalAlpha = GetCoverage(signedDistance, PixelSizeAtUnitPlane, -dot(closestPointOnRay, CameraBackwardPS));
+
+			// Extract alpha from PackedColor (assuming ARGB format where alpha is in the high 8 bits)
+			// float packedAlpha = ((input.Sphere.PackedColor >> 24) & 0xFF) / 255.0;
+
+			// For RGBA format (alpha in low 8 bits):
+			float packedAlpha = (input.Sphere.PackedColor & 0xFF) / 255.0;
+
+			// Multiply the coverage alpha with the packed alpha for transparency
+			output.Color = float4(color, originalAlpha * packedAlpha);
+			// output.Color = float4(color, 0);
+		}
+
 		output.Depth = GetProjectedDepth(-dot(CameraBackwardPS, hitLocation), Near, Far);
 	}
 	else
