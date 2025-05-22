@@ -28,6 +28,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     float PlanetRadius = 50.0f;
     private Vector3 PlanetCenter = new Vector3();
+    int subDivisionSteps = 8;
 
     float gravityValue = 100000.0f;
 
@@ -38,11 +39,13 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     float moleculeMass = 1.0f;
 
     // const int count = 40;
-    const int count = 20;
+    const int count = 5;
 
     const int length = count;
     const int width = count;
     const int height = count;
+
+    private const int planetMeshWidth = 20;
 
     Vector3 mainOrigin = new Vector3(-200, 300, 0);
     Vector3 mainMoleculeOrigin = new Vector3();
@@ -124,6 +127,62 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         // Simulation.Statics.Add(new StaticDescription(new Vector3(), Simulation.Shapes.Add(sphereShape), material));
     }
 
+    private void CreateMeshCylinder()
+    {
+        const float scale = 2.5f;
+
+        // var position = new Vector3(0, -15, 0);
+        var position = new Vector3(0, 0, 0);
+        var rotation = QuaternionEx.CreateFromAxisAngle(new Vector3(0, 1, 0), MathF.PI / 2);
+        var scalingVector = new Vector3(1, 1, 1);
+
+        var middle = (planetMeshWidth - 1.0) / 2.0;
+        var terrainPosition = new Vector2(1 - planetMeshWidth, 1 - planetMeshWidth) * scale * 0.5f;
+
+        // void createMesh(bool positive)
+        // {
+        //     var planeMesh = DemoMeshHelper.CreateDeformedPlane(planetMeshWidth, planetMeshWidth,
+        //         (int vX, int vY) =>
+        //         {
+        //             var terrainHeight = (positive ? 1 : -1) * (float)Math.Sqrt(middle * middle - vX * vX) * scale;
+        //             var vertexPosition = new Vector2(vX * scale, vY * scale) + terrainPosition;
+        //             return new Vector3(vertexPosition.X, terrainHeight, vertexPosition.Y);
+        //         }, scalingVector, BufferPool, ThreadDispatcher);
+        //     Simulation.Statics.Add(new StaticDescription(position, rotation, Simulation.Shapes.Add(planeMesh)));
+        // }
+        //
+        // createMesh(true);
+        // createMesh(false);
+
+        var planeMesh1 = DemoMeshHelper.CreateDeformedPlane(planetMeshWidth, planetMeshWidth,
+            (int vX, int vY) =>
+            {
+                var terrainHeight = (float)Math.Sqrt(middle * middle - vX * vX) * scale;
+                var vertexPosition = new Vector2(vX * scale, vY * scale) + terrainPosition;
+                return new Vector3(vertexPosition.X, terrainHeight, vertexPosition.Y);
+            }, scalingVector, BufferPool, ThreadDispatcher);
+        Simulation.Statics.Add(new StaticDescription(position, rotation, Simulation.Shapes.Add(planeMesh1)));
+
+        var planeMesh2 = DemoMeshHelper.CreateDeformedPlane(planetMeshWidth, planetMeshWidth,
+            (int vX, int vY) =>
+            {
+                var terrainHeight = -(float)Math.Sqrt(middle * middle - vX * vX) * scale;
+                var vertexPosition = new Vector2(vX * scale, vY * scale) + terrainPosition;
+                return new Vector3(vertexPosition.X, terrainHeight, vertexPosition.Y);
+            }, scalingVector, BufferPool, ThreadDispatcher);
+        Simulation.Statics.Add(new StaticDescription(position, rotation, Simulation.Shapes.Add(planeMesh2)));
+    }
+
+    private void CreateMeshSphere()
+    {
+        var position = new Vector3(0, 0, 0);
+        var rotation = QuaternionEx.CreateFromAxisAngle(new Vector3(0, 1, 0), MathF.PI / 2);
+        var scalingVector = new Vector3(1, 1, 1);
+
+        var planetMesh = PlanetMeshCreator.CreatePlanetMesh(PlanetRadius, subDivisionSteps, scalingVector, BufferPool, ThreadDispatcher);
+        Simulation.Statics.Add(new StaticDescription(position, rotation, Simulation.Shapes.Add(planetMesh)));
+    }
+
     private void CreateOrbiters()
     {
         var orbiter = new Sphere(orbiterRadius);
@@ -168,7 +227,9 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     {
         SetCamera(camera);
         CreateSimulation();
-        CreatePlanet();
+        // CreatePlanet();
+        // CreateMeshCylinder();
+        CreateMeshSphere();
         CreateOrbiters();
         CreateMolecules();
     }
