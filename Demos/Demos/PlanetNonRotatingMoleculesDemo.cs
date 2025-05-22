@@ -38,8 +38,8 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     float moleculeRadius = 0.5f;
     float moleculeMass = 1.0f;
 
-    // const int count = 40;
-    const int count = 5;
+    const int count = 40;
+    // const int count = 5;
 
     const int length = count;
     const int width = count;

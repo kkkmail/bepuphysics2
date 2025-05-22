@@ -286,7 +286,37 @@ namespace DemoRenderer
             context.OutputMerger.SetBlendState(opaqueBlendState);
             BoxRenderer.Render(context, camera, Surface.Resolution, Shapes.ShapeCache.Boxes.Span, 0, Shapes.ShapeCache.Boxes.Count);
             TriangleRenderer.Render(context, camera, Surface.Resolution, Shapes.ShapeCache.Triangles.Span, 0, Shapes.ShapeCache.Triangles.Count);
+
+            #region Meshes
+
+            #region Original
+
+            // MeshRenderer.Render(context, camera, Surface.Resolution, Shapes.ShapeCache.Meshes.Span, 0, Shapes.ShapeCache.Meshes.Count);
+
+            #endregion
+
+            #region V1
+
+            unsafe
+            {
+                for (var i = 0; i < Shapes.ShapeCache.Meshes.Count; i++)
+                {
+                    var mesh = Shapes.ShapeCache.Meshes.Span.GetPointer(i);
+                    // (*mesh).PackedColor = 0xFFFFFFFF;
+                    // (*mesh).PackedColor = 0x80FFFFFF;
+                    (*mesh).PackedColor = 0xFFFFFF80;
+                    // (*mesh).PackedColor = 0xFFFFFF40;
+                    // (*mesh).PackedColor = 0xFFFFFF20;
+                    // (*mesh).PackedColor = 0xFFFFFF00;
+                }
+            }
+
             MeshRenderer.Render(context, camera, Surface.Resolution, Shapes.ShapeCache.Meshes.Span, 0, Shapes.ShapeCache.Meshes.Count);
+
+            #endregion
+
+            #endregion
+
             LineRenderer.Render(context, camera, Surface.Resolution, Lines.lines.Span, 0, Lines.lines.Count);
 
             Background.Render(context, camera);
