@@ -18,14 +18,49 @@ namespace Demos.Demos;
 /// </summary>
 public class PlanetNonRotatingMoleculesDemo : Demo
 {
-    public StaticHandle PlanetHandle;
-    public float PlanetRadius;
-    public Vector3 PlanetCenter;
+    #region Parameters
+
+    float frequency = 5.0f;
+    float dampingRatio = -0.2625f;
+
+    float maximumRecoveryVelocity = float.MaxValue;
+    float frictionCoefficient = 0.0f;
+
+    float PlanetRadius = 50.0f;
+    private Vector3 PlanetCenter = new Vector3();
+
+    float gravityValue = 100000.0f;
+
+    float orbiterRadius = 1.0f;
+    float orbiterMass = 1.0f;
+
+    float moleculeRadius = 0.5f;
+    float moleculeMass = 1.0f;
+
+    // const int count = 40;
+    const int count = 20;
+
+    const int length = count;
+    const int width = count;
+    const int height = count;
+
+    Vector3 mainOrigin = new Vector3(-200, 300, 0);
+    Vector3 mainMoleculeOrigin = new Vector3();
+
+    Vector3 mainVelocity = new Vector3();
+    Vector3 mainMoleculeVelocity = new Vector3(0, 0, 0);
+
+    Vector3 spacing = new Vector3(5);
+
+    StaticHandle PlanetHandle;
+
+    #endregion
 
     struct PlanetaryGravityCallbacks : IPoseIntegratorCallbacks
     {
         public Vector3 PlanetCenter;
         public float Gravity;
+        public float Radius;
 
         public readonly AngularIntegrationMode AngularIntegrationMode => AngularIntegrationMode.Nonconserving;
 
@@ -49,68 +84,48 @@ public class PlanetNonRotatingMoleculesDemo : Demo
             BodyInertiaWide localInertia, Vector<int> integrationMask, int workerIndex, Vector<float> dt,
             ref BodyVelocityWide velocity)
         {
-            var offset = position - Vector3Wide.Broadcast(PlanetCenter);
-            var distance = offset.Length();
-            velocity.Linear -= new Vector<float>(gravityDt) * offset /
-                               Vector.Max(Vector<float>.One, distance * distance * distance);
+            // var offset = position - Vector3Wide.Broadcast(PlanetCenter);
+            // var distance = offset.Length();
+            //
+            // if (distance[0] >= Radius)
+            // {
+            //     velocity.Linear -= new Vector<float>(gravityDt) * offset /
+            //                        Vector.Max(Vector<float>.One, distance * distance * distance);
+            // }
         }
     }
 
-    public override void Initialize(ContentArchive content, Camera camera)
+    private void SetCamera(Camera camera)
     {
         camera.Position = new Vector3(-110, 80, -50);
         camera.Yaw = 0;
         camera.Pitch = MathF.PI * -0.5f;
+    }
 
-        #region Parameters
-
-        var frequency = 5.0f;
-        var dampingRatio = -0.2625f;
-
-        var maximumRecoveryVelocity = float.MaxValue;
-        var frictionCoefficient = 0.0f;
-
-        var gravityValue = 100000.0f;
-
-        var orbiterRadius = 1.0f;
-        var orbiterMass = 1.0f;
-
-        const int count = 40;
-        // const int count = 1;
-
-        const int length = count;
-        const int width = count;
-        const int height = count;
-
-        var mainOrigin = new Vector3(-200, 300, 0);
-        // var mainVelocity = new Vector3(30, 0, 0);
-        var mainVelocity = new Vector3();
-        var spacing = new Vector3(5);
-
-        #endregion
-
-        PlanetCenter = new Vector3();
-
+    private void CreateSimulation()
+    {
         Simulation = Simulation.Create(BufferPool,
             new DemoNarrowPhaseCallbacks(
                 new SpringSettings(frequency, dampingRatio),
                 maximumRecoveryVelocity: maximumRecoveryVelocity,
                 frictionCoefficient: frictionCoefficient),
-            new PlanetaryGravityCallbacks { PlanetCenter = PlanetCenter, Gravity = gravityValue },
+            new PlanetaryGravityCallbacks
+                { PlanetCenter = PlanetCenter, Gravity = gravityValue, Radius = PlanetRadius },
             new SolveDescription(8, 1));
+    }
 
-        #region Planet
-
-        PlanetRadius = 50;
+    private void CreatePlanet()
+    {
         PlanetHandle = Simulation.Statics.Add(new StaticDescription(PlanetCenter, Simulation.Shapes.Add(new Sphere(PlanetRadius))));
         // Simulation.Statics.Add(new StaticDescription(new Vector3(), Simulation.Shapes.Add(new Cylinder(20, 100))));
 
         // var sphereShape = new Sphere(50);
         // var material = new DefaultMaterial { Color = new Vector4(1, 1, 1, 0.5f) }; // RGBA: A=0.5 for 50% transparency
         // Simulation.Statics.Add(new StaticDescription(new Vector3(), Simulation.Shapes.Add(sphereShape), material));
+    }
 
-        #endregion
-
+    private void CreateOrbiters()
+    {
         var orbiter = new Sphere(orbiterRadius);
         var inertia = orbiter.ComputeInertia(orbiterMass);
         var orbiterShapeIndex = Simulation.Shapes.Add(orbiter);
@@ -129,6 +144,35 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         }
     }
 
+    private void CreateMolecules()
+    {
+        var molecule = new Sphere(moleculeRadius);
+        var moleculeInertia = molecule.ComputeInertia(moleculeMass);
+        var moleculeShapeIndex = Simulation.Shapes.Add(molecule);
+
+        for (var i = 0; i < length; ++i)
+        {
+            for (var j = 0; j < height; ++j)
+            {
+                var origin = mainMoleculeOrigin + spacing * new Vector3(length * -0.5f, 0, width * -0.5f);
+                for (var k = 0; k < width; ++k)
+                {
+                    Simulation.Bodies.Add(BodyDescription.CreateDynamic(
+                        origin + new Vector3(i, j, k) * spacing, mainMoleculeVelocity, moleculeInertia, moleculeShapeIndex, 0.01f));
+                }
+            }
+        }
+    }
+
+    public override void Initialize(ContentArchive content, Camera camera)
+    {
+        SetCamera(camera);
+        CreateSimulation();
+        CreatePlanet();
+        CreateOrbiters();
+        CreateMolecules();
+    }
+
     public override void Render(Renderer renderer, Camera camera, Input input, TextBuilder text, Font font)
     {
         var bottomY = renderer.Surface.Resolution.Y;
@@ -144,30 +188,30 @@ public class PlanetNonRotatingMoleculesDemo : Demo
             text.Clear().Append("In this demo, all bodies are pulled towards the center of the planet."),
             new Vector2(16, bottomY - 16), 16, Vector3.One, font);
 
-        var deviceContext = renderer.Surface.Context;
-        var surface = renderer.Surface;
-        var planetStatic = Simulation.Statics.GetDescription(PlanetHandle);
-        DemoRenderer.Helpers.PackOrientation(planetStatic.Pose.Orientation, out var packedOrientation);
-        var color = new Vector3(100, 100, 100);
-
-        // var shapeIndex = planetStatic.Shape.Index;
-        // var shape = Simulation.Shapes[shapeIndex];
-
-        // var sphere = (Sphere)shape;
-
-        // if (shape is Sphere sphere)
+        // var deviceContext = renderer.Surface.Context;
+        // var surface = renderer.Surface;
+        // var planetStatic = Simulation.Statics.GetDescription(PlanetHandle);
+        // DemoRenderer.Helpers.PackOrientation(planetStatic.Pose.Orientation, out var packedOrientation);
+        // var color = new Vector3(100, 100, 100);
+        //
+        // // var shapeIndex = planetStatic.Shape.Index;
+        // // var shape = Simulation.Shapes[shapeIndex];
+        //
+        // // var sphere = (Sphere)shape;
+        //
+        // // if (shape is Sphere sphere)
+        // // {
+        // // var instance = new SphereInstance(planetStatic.Pose, new Vector3(0.8f, 0.8f, 0.8f)); // Gray color
+        //
+        // var instance = new SphereInstance
         // {
-        // var instance = new SphereInstance(planetStatic.Pose, new Vector3(0.8f, 0.8f, 0.8f)); // Gray color
-
-        var instance = new SphereInstance
-        {
-            Position = PlanetCenter,
-            Radius = PlanetRadius + 100,
-            PackedOrientation = packedOrientation,
-            PackedColor = DemoRenderer.Helpers.PackColor(color),
-        };
-
-        renderer.SphereRenderer.Render(deviceContext, camera, surface.Resolution, [instance], 0, 1);
+        //     Position = PlanetCenter,
+        //     Radius = PlanetRadius + 100,
+        //     PackedOrientation = packedOrientation,
+        //     PackedColor = DemoRenderer.Helpers.PackColor(color),
+        // };
+        //
+        // renderer.SphereRenderer.Render(deviceContext, camera, surface.Resolution, [instance], 0, 1);
         base.Render(renderer, camera, input, text, font);
     }
 }
