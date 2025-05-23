@@ -323,7 +323,7 @@ public class DemoHarness : IDisposable
         float warningHeight = 15f;
         renderer.TextBatcher.Write(uiText.Clear().Append("Running in Debug configuration. Compile in Release configuration for performance testing."),
             new Vector2((loop.Window.Resolution.X - GlyphBatch.MeasureLength(uiText, font, warningHeight)) * 0.5f, warningHeight), warningHeight, new Vector3(1, 0, 0), font);
-#endif            
+#endif
         float textHeight = 16;
         float lineSpacing = textHeight * 1.0f;
         var textColor = new Vector3(1, 1, 1);

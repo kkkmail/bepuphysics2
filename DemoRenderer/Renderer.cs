@@ -268,7 +268,7 @@ namespace DemoRenderer
                         // (*sphere).PackedColor = 0xFFFFFFFF;
                         // (*sphere).PackedColor = 0x80FFFFFF;
                         // (*sphere).PackedColor = 0xFFFFFF20;
-                        (*sphere).PackedColor = 0xFFFFFF00;
+                        // (*sphere).PackedColor = 0xFFFFFF00;
                     }
                 }
             }
