@@ -284,7 +284,37 @@ namespace DemoRenderer
 
             //Non-raytraced shapes just use regular opaque rendering.
             context.OutputMerger.SetBlendState(opaqueBlendState);
+
+            #region Boxes
+
+            #region Original
+
+            // BoxRenderer.Render(context, camera, Surface.Resolution, Shapes.ShapeCache.Boxes.Span, 0, Shapes.ShapeCache.Boxes.Count);
+
+            #endregion
+
+            #region V2
+
+            unsafe
+            {
+                for (var i = 0; i < Shapes.ShapeCache.Boxes.Count; i++)
+                {
+                    var box = Shapes.ShapeCache.Boxes.Span.GetPointer(i);
+                    // (*box).PackedColor = 0xFFFFFFFF;
+                    // (*box).PackedColor = 0x80FFFFFF;
+                    (*box).PackedColor = 0xFFFFFF80;
+                    // (*box).PackedColor = 0xFFFFFF40;
+                    // (*box).PackedColor = 0xFFFFFF20;
+                    // (*box).PackedColor = 0xFFFFFF00;
+                }
+            }
+
             BoxRenderer.Render(context, camera, Surface.Resolution, Shapes.ShapeCache.Boxes.Span, 0, Shapes.ShapeCache.Boxes.Count);
+
+            #endregion
+
+            #endregion
+
             TriangleRenderer.Render(context, camera, Surface.Resolution, Shapes.ShapeCache.Triangles.Span, 0, Shapes.ShapeCache.Triangles.Count);
 
             #region Meshes
@@ -295,7 +325,7 @@ namespace DemoRenderer
 
             #endregion
 
-            #region V1
+            #region V2
 
             unsafe
             {

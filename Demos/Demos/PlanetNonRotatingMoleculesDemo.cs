@@ -26,10 +26,30 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     float maximumRecoveryVelocity = float.MaxValue;
     float frictionCoefficient = 0.0f;
 
-    float thickness = 5.0f;
-    int numberOfLayers = 1;
+    #region Solid Planet - velocityIterationCount: 8, substepCount: 1, frequency: 5.0
 
-    #region velocityIterationCount: 8, substepCount: 1, frequency: 5.0
+    // int velocityIterationCount = 8;
+    // int substepCount = 1;
+    // float frequency = 5.0f;
+    // float dampingRatio = -0.2625f; // Has runaway orbiters.
+    // // float dampingRatio = -0.262f;
+
+    #endregion
+
+
+    #region Mesh Planet - velocityIterationCount: 8, substepCount: 1, frequency: 5.0
+
+    float thickness = 5.0f;
+    int numberOfLayers = 10;
+
+    // int velocityIterationCount = 8;
+    // int substepCount = 1;
+    // float frequency = 5.0f;
+    // float dampingRatio = 0f;
+
+    #endregion
+
+    #region Box with molecules
 
     int velocityIterationCount = 8;
     int substepCount = 1;
@@ -62,7 +82,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     #endregion
 
-    #region Parameters
+    #region Planetary Parameters
 
     static float testVelocityValue = 0f;
 
@@ -95,7 +115,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     Vector3 mainMoleculeOrigin = new Vector3();
 
     Vector3 mainVelocity = new Vector3();
-    Vector3 mainMoleculeVelocity = new Vector3(0, 0, 0);
+    float mainMoleculeVelocity = 20f;
 
     Vector3 spacing = new Vector3(5);
 
@@ -110,6 +130,9 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     private BodyHandle[] orbiterHandles;
     private bool hasOrbiters;
+
+    private BodyHandle[] moleculeHandles;
+    private bool hasMolecules;
 
     # region Statistics
 
@@ -132,6 +155,15 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     private float averageAbsoluteAngularMomentum = 0;
 
     #endregion
+
+    #endregion
+
+    #region Box Parameters
+
+    private float boxWallThickness = 2f;
+    private float boxWidth = 400f;
+    private float boxLength = 400f;
+    private float boxHeight = 400f;
 
     #endregion
 
@@ -211,11 +243,33 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         PlanetHandle =
             Simulation.Statics.Add(new StaticDescription(PlanetCenter,
                 Simulation.Shapes.Add(new Sphere(PlanetRadius))));
-        // Simulation.Statics.Add(new StaticDescription(new Vector3(), Simulation.Shapes.Add(new Cylinder(20, 100))));
+    }
 
-        // var sphereShape = new Sphere(50);
-        // var material = new DefaultMaterial { Color = new Vector4(1, 1, 1, 0.5f) }; // RGBA: A=0.5 for 50% transparency
-        // Simulation.Statics.Add(new StaticDescription(new Vector3(), Simulation.Shapes.Add(sphereShape), material));
+    private void CreateBox()
+    {
+        var wall1Shape = new Box(width: boxWidth + boxWallThickness, height: boxHeight + boxWallThickness, length: boxWallThickness);
+        var wall1Position = new Vector3(0, 0, -boxLength / 2);
+        Simulation.Statics.Add(new StaticDescription(wall1Position, Simulation.Shapes.Add(wall1Shape)));
+
+        var wall2Shape = new Box(width: boxWidth + boxWallThickness, height: boxHeight + boxWallThickness, length: boxWallThickness);
+        var wall2Position = new Vector3(0, 0, boxLength / 2);
+        Simulation.Statics.Add(new StaticDescription(wall2Position, Simulation.Shapes.Add(wall2Shape)));
+
+        var wall3Shape = new Box(width: boxWallThickness, height: boxHeight + boxWallThickness, length: boxLength + boxWallThickness);
+        var wall3Position = new Vector3(boxWidth / 2, 0, 0);
+        Simulation.Statics.Add(new StaticDescription(wall3Position, Simulation.Shapes.Add(wall3Shape)));
+
+        var wall4Shape = new Box(width: boxWallThickness, height: boxHeight + boxWallThickness, length: boxLength + boxWallThickness);
+        var wall4Position = new Vector3(-boxWidth / 2, 0, 0);
+        Simulation.Statics.Add(new StaticDescription(wall4Position, Simulation.Shapes.Add(wall4Shape)));
+
+        var wall5Shape = new Box(width: boxWidth + boxWallThickness, height: boxWallThickness, length: boxLength + boxWallThickness);
+        var wall5Position = new Vector3(0, -boxHeight / 2, 0);
+        Simulation.Statics.Add(new StaticDescription(wall5Position, Simulation.Shapes.Add(wall5Shape)));
+
+        var wall6Shape = new Box(width: boxWidth + boxWallThickness, height: boxWallThickness, length: boxLength + boxWallThickness);
+        var wall6Position = new Vector3(0, boxHeight / 2, 0);
+        Simulation.Statics.Add(new StaticDescription(wall6Position, Simulation.Shapes.Add(wall6Shape)));
     }
 
     private void CreateMeshCylinder()
@@ -358,19 +412,25 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     private void CreateMolecules()
     {
+        hasMolecules = true;
         var molecule = new Sphere(moleculeRadius);
         var moleculeInertia = molecule.ComputeInertia(moleculeMass);
         var moleculeShapeIndex = Simulation.Shapes.Add(molecule);
+        moleculeHandles = new BodyHandle[length * height * width];
 
         for (var i = 0; i < length; ++i)
         {
             for (var j = 0; j < height; ++j)
             {
                 var origin = mainMoleculeOrigin + spacing * new Vector3(length * -0.5f, 0, width * -0.5f);
+
                 for (var k = 0; k < width; ++k)
                 {
-                    Simulation.Bodies.Add(BodyDescription.CreateDynamic(
-                        origin + new Vector3(i, j, k) * spacing, mainMoleculeVelocity, moleculeInertia,
+                    var moleculeVelocity =
+                        mainMoleculeVelocity * new Vector3((j - (height / 2.0f)) / height, (k - (width / 2.0f)) / width, (i - (length / 2.0f)) / length);
+
+                    moleculeHandles[k * length * height + j * length + i] = Simulation.Bodies.Add(BodyDescription.CreateDynamic(
+                        origin + new Vector3(i, j, k) * spacing, moleculeVelocity, moleculeInertia,
                         moleculeShapeIndex, activity));
                 }
             }
@@ -383,12 +443,12 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     public override void Initialize(ContentArchive content, Camera camera)
     {
-        SetGravity();
+        // SetGravity();
         CreateSimulation(camera);
 
         #region Planet
 
-        CreatePlanet();
+        // CreatePlanet();
         // CreateMeshCylinder();
         // CreateMeshSphere();
 
@@ -397,11 +457,21 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
         #endregion
 
-        CreateTestOrbiter();
+        #region Box
+
+        CreateBox();
+
+        #endregion
+
+        #region orbiters
+
+        // CreateTestOrbiter();
         // CreateTestOrbiter2();
 
-        CreateOrbiters();
-        // CreateMolecules();
+        // CreateOrbiters();
+        CreateMolecules();
+
+        #endregion
     }
 
     #endregion
@@ -477,23 +547,24 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     private void OutputOrbiterStatistics(Renderer renderer, TextBuilder text, Font font)
     {
-        if (!hasOrbiters)
+        if (!(hasOrbiters || hasMolecules))
         {
             return;
         }
 
+        var bodyHandles = hasOrbiters ? orbiterHandles : moleculeHandles;
         orbiterStatisticsCallCount++;
 
         // Only calculate statistics every N calls
         if (orbiterStatisticsCallCount % orbiterStatisticsReportingFrequency == 0)
         {
-            CalculateOrbiterStatistics();
+            CalculateOrbiterStatistics(bodyHandles);
         }
 
         DisplayOrbiterStatistics(renderer, text, font);
     }
 
-    private void CalculateOrbiterStatistics()
+    private void CalculateOrbiterStatistics(BodyHandle[] bodyHandles)
     {
         float totalSpeedX = 0, totalSpeedY = 0, totalSpeedZ = 0;
         float totalAbsoluteSpeed = 0;
@@ -509,9 +580,9 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         int runawayCount = 0;
         float totalAngularMomentumX = 0, totalAngularMomentumY = 0, totalAngularMomentumZ = 0;
 
-        var orbiterCount = orbiterHandles.Length;
+        var orbiterCount = bodyHandles.Length;
 
-        foreach (var handle in orbiterHandles)
+        foreach (var handle in bodyHandles)
         {
             Simulation.Bodies.GetDescription(handle, out var description);
 

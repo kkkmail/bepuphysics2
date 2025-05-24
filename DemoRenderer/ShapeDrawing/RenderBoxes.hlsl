@@ -17,7 +17,7 @@ StructuredBuffer<Instance> Instances : register(t0);
 
 PSInput VSMain(uint vertexId : SV_VertexId)
 {
-	//The vertex id is used to position each vertex. 
+	//The vertex id is used to position each vertex.
 	//Each AABB has 8 vertices; the position is based on the 3 least significant bits.
 	int instanceId = vertexId >> 3;
 	PSInput output;
@@ -42,12 +42,31 @@ PSInput VSMain(uint vertexId : SV_VertexId)
 	return output;
 }
 
-float3 PSMain(PSInput input) : SV_Target0
+// float3 PSMain(PSInput input) : SV_Target0
+// {
+// 	float3 dpdx = ddx(input.ToAABB);
+// 	float3 dpdy = ddy(input.ToAABB);
+// 	float3 normal = normalize(cross(dpdy, dpdx));
+// 	return ShadeSurface(
+// 		input.ToAABB, normal, UnpackR11G11B10_UNorm(input.PackedColor), dpdx, dpdy,
+// 		input.InstancePosition, input.Orientation);
+// }
+
+// TRANSPARENCY CHANGE: Modified return type from float3 to float4 to include alpha
+float4 PSMain(PSInput input) : SV_Target0
 {
 	float3 dpdx = ddx(input.ToAABB);
 	float3 dpdy = ddy(input.ToAABB);
 	float3 normal = normalize(cross(dpdy, dpdx));
-	return ShadeSurface(
-		input.ToAABB, normal, UnpackR11G11B10_UNorm(input.PackedColor), dpdx, dpdy,
-		input.InstancePosition, input.Orientation);
+	float3 color = ShadeSurface(
+	   input.ToAABB, normal, UnpackR11G11B10_UNorm(input.PackedColor), dpdx, dpdy,
+	   input.InstancePosition, input.Orientation);
+
+	// TRANSPARENCY CHANGE: Extract alpha from PackedColor and return float4 instead of float3
+	// For RGBA format (alpha in low 8 bits, matching sphere shader):
+	float packedAlpha = (input.PackedColor & 0xFF) / 255.0;
+	return float4(color, packedAlpha);
+
+	// TRANSPARENCY CHANGE: To disable transparency, comment out the above 2 lines and uncomment this:
+	// return float4(color, 1.0);
 }
