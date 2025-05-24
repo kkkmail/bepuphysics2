@@ -8,10 +8,8 @@ using DemoRenderer.UI;
 using DemoUtilities;
 using System;
 using System.Numerics;
-using DemoRenderer.ShapeDrawing;
 
 namespace Demos.Demos;
-
 
 /// <summary>
 /// Shows how to use custom velocity integration to implement planetary gravity.
