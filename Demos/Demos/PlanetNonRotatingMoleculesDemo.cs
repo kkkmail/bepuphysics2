@@ -113,6 +113,8 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     private BodyHandle[] orbiterHandles;
     private bool hasOrbiters;
 
+    # region Statistics
+
     private int orbiterStatisticsCallCount = -1;
     private int orbiterStatisticsReportingFrequency = 10;
     private Vector3 averageSpeed = Vector3.Zero;
@@ -125,6 +127,11 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     private float averagePotentialEnergy = 0;
     private float averageTotalEnergy = 0;
     private float minimumAbsolutePosition = 0;
+    private int orbitersInsidePlanet = 0;
+    private Vector3 averageAngularMomentum = Vector3.Zero;
+    private float averageAbsoluteAngularMomentum = 0;
+
+    #endregion
 
     #endregion
 
@@ -497,6 +504,8 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         float totalKineticEnergy = 0;
         float totalPotentialEnergy = 0;
         float minAbsolutePosition = float.MaxValue;
+        int insidePlanetCount = 0;
+        float totalAngularMomentumX = 0, totalAngularMomentumY = 0, totalAngularMomentumZ = 0;
 
         var orbiterCount = orbiterHandles.Length;
 
@@ -540,6 +549,18 @@ public class PlanetNonRotatingMoleculesDemo : Demo
             {
                 minAbsolutePosition = absolutePosition;
             }
+
+            // Count orbiters inside planet
+            if (absolutePosition < PlanetRadius - orbiterRadius)
+            {
+                insidePlanetCount++;
+            }
+
+            // Angular momentum calculation: L = r × v (cross product)
+            Vector3 angularMomentum = Vector3.Cross(position, velocity);
+            totalAngularMomentumX += angularMomentum.X;
+            totalAngularMomentumY += angularMomentum.Y;
+            totalAngularMomentumZ += angularMomentum.Z;
         }
 
         // Calculate averages
@@ -558,6 +579,13 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         averagePotentialEnergy = totalPotentialEnergy / orbiterCount;
         averageTotalEnergy = averageKineticEnergy + averagePotentialEnergy;
         minimumAbsolutePosition = minAbsolutePosition;
+
+        orbitersInsidePlanet = insidePlanetCount;
+        averageAngularMomentum = new Vector3(totalAngularMomentumX / orbiterCount, totalAngularMomentumY / orbiterCount,
+            totalAngularMomentumZ / orbiterCount);
+        averageAbsoluteAngularMomentum = (float)Math.Sqrt(averageAngularMomentum.X * averageAngularMomentum.X +
+                                                          averageAngularMomentum.Y * averageAngularMomentum.Y +
+                                                          averageAngularMomentum.Z * averageAngularMomentum.Z);
     }
 
     private void DisplayOrbiterStatistics(Renderer renderer, TextBuilder text, Font font)
@@ -572,7 +600,8 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
         var message2 =
             $"Energy: avg kinetic: {averageKineticEnergy:F2}, avg potential: {averagePotentialEnergy:F2}, avg total: {averageTotalEnergy:F2}, " +
-            $"min absolute position: {minimumAbsolutePosition:F2}.";
+            $"min absolute position: {minimumAbsolutePosition:F2}, inside planet: {orbitersInsidePlanet}, " +
+            $"avg angular momentum: ({averageAngularMomentum.X:F2}, {averageAngularMomentum.Y:F2}, {averageAngularMomentum.Z:F2}), abs: {averageAbsoluteAngularMomentum:F2}.";
 
         renderer.TextBatcher.Write(
             text.Clear().Append(message1),
