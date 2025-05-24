@@ -20,15 +20,10 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 {
     #region Physical Parameters
 
-    float gravityValue = 100_000.0f;
-    // float gravityValue = 0f;
+    private float gravityValue;
 
-    // float frequency = 5.0f;
-    // float dampingRatio = -0.2625f;
-
-    float frequency = 30.0f;
-    // float dampingRatio = -0.09817f; // 199.99846 of 200
-    float dampingRatio = -0.0981703f; // 199.9985937 of 200
+    // float frequency = 30.0f;
+    // float dampingRatio = 0.0f;
 
     float maximumRecoveryVelocity = float.MaxValue;
     float frictionCoefficient = 0.0f;
@@ -36,14 +31,34 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     float thickness = 5.0f;
     int numberOfLayers = 1;
 
-    // int velocityIterationCount = 8;
-    // int substepCount = 1;
+    #region velocityIterationCount: 8, substepCount: 1, frequency: 5.0
+
+    int velocityIterationCount = 8;
+    int substepCount = 1;
+    float frequency = 5.0f;
+    float dampingRatio = -0.2625f;
+
+    #endregion
 
     // int velocityIterationCount = 8;
     // int substepCount = 8;
 
-    int velocityIterationCount = 16;
-    int substepCount = 16;
+    // int velocityIterationCount = 16;
+    // int substepCount = 16;
+    // float frequency = 30.0f;
+    // float dampingRatio = -0.09817f; // 199.99846 of 200
+    // float dampingRatio = -0.0981703f; // 199.9985937 of 200
+
+    // int velocityIterationCount = 32;
+    // int substepCount = 32;
+    // float frequency = 30.0f;
+    // // float dampingRatio = -0.05f; // -19.8445 of 20; -193.224 of 200.
+    // float dampingRatio = -0.049f; // Passes through at 200 with +199.986 and even passes through at 20.
+
+    // int velocityIterationCount = 64;
+    // int substepCount = 64;
+    // float frequency = 300.0f;
+    // float dampingRatio = -0.245f; // -19.36 at +20
 
     float activity = 0.01f;
 
@@ -51,7 +66,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     #region Parameters
 
-    static float testVelocityValue = 20f;
+    static float testVelocityValue = 0f;
 
     static float testOriginValue = 500f;
     Vector3 testOrigin = new Vector3(-testOriginValue, 0, 0);
@@ -67,7 +82,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     float orbiterMass = 1.0f;
 
     float moleculeRadius = 0.5f;
-    float moleculeMass = 1.0f;
+    float moleculeMass = 0.125f;
 
     // const int count = 40;
     const int count = 40;
@@ -93,6 +108,19 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     Vector3 scalingVector = new Vector3(1, 1, 1);
 
     private BodyHandle testHandle;
+    private bool hasTestOrbiter;
+
+    private BodyHandle[] orbiterHandles;
+    private bool hasOrbiters;
+
+    private int orbiterStatisticsCallCount = -1;
+    private int orbiterStatisticsReportingFrequency = 10;
+    private Vector3 averageSpeed = Vector3.Zero;
+    private float averageAbsoluteSpeed = 0;
+    private Vector3 averageAngularSpeed = Vector3.Zero;
+    private float averageAbsoluteAngularSpeed = 0;
+    private Vector3 averagePosition = Vector3.Zero;
+    private float averageAbsolutePosition = 0;
 
     #endregion
 
@@ -148,8 +176,15 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         camera.Pitch = MathF.PI * -0.5f;
     }
 
-    private void CreateSimulation()
+    private void SetGravity()
     {
+        gravityValue = 100_000.0f;
+    }
+
+    private void CreateSimulation(Camera camera)
+    {
+        SetCamera(camera);
+
         Simulation = Simulation.Create(BufferPool,
             new DemoNarrowPhaseCallbacks(
                 new SpringSettings(frequency, dampingRatio),
@@ -259,14 +294,13 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         }
     }
 
-    private BodyHandle CreateTestOrbiter()
+    private void CreateTestOrbiter()
     {
+        hasTestOrbiter = true;
         var orbiter = new Sphere(orbiterRadius);
         var inertia = orbiter.ComputeInertia(orbiterMass);
         var orbiterShapeIndex = Simulation.Shapes.Add(orbiter);
-
-        var handle = Simulation.Bodies.Add(BodyDescription.CreateDynamic(testOrigin, testVelocity, inertia, orbiterShapeIndex, activity));
-        return handle;
+        testHandle = Simulation.Bodies.Add(BodyDescription.CreateDynamic(testOrigin, testVelocity, inertia, orbiterShapeIndex, activity));
     }
 
     private BodyHandle CreateTestOrbiter2()
@@ -281,9 +315,12 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     private void CreateOrbiters()
     {
+        hasOrbiters = true;
         var orbiter = new Sphere(orbiterRadius);
         var inertia = orbiter.ComputeInertia(orbiterMass);
         var orbiterShapeIndex = Simulation.Shapes.Add(orbiter);
+
+        orbiterHandles = new BodyHandle[length * height * width];
 
         for (var i = 0; i < length; ++i)
         {
@@ -292,7 +329,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
                 var origin = mainOrigin + spacing * new Vector3(length * -0.5f, 0, width * -0.5f);
                 for (var k = 0; k < width; ++k)
                 {
-                    Simulation.Bodies.Add(BodyDescription.CreateDynamic(
+                    orbiterHandles[k * length * height + j * length + i] = Simulation.Bodies.Add(BodyDescription.CreateDynamic(
                         origin + new Vector3(i, j, k) * spacing, mainVelocity, inertia, orbiterShapeIndex, activity));
                 }
             }
@@ -325,8 +362,10 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     public override void Initialize(ContentArchive content, Camera camera)
     {
-        SetCamera(camera);
-        CreateSimulation();
+        SetGravity();
+        CreateSimulation(camera);
+
+        #region Planet
 
         CreatePlanet();
         // CreateMeshCylinder();
@@ -335,11 +374,12 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         // CreateThickMeshSphere();
         // CreateThickPlate();
 
-        testHandle = CreateTestOrbiter();
+        #endregion
+
+        CreateTestOrbiter();
         // CreateTestOrbiter2();
 
-        // CreateOrbiters();
-
+        CreateOrbiters();
         // CreateMolecules();
     }
 
@@ -350,6 +390,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     public override void Render(Renderer renderer, Camera camera, Input input, TextBuilder text, Font font)
     {
         OutputTestVelocity(renderer, text, font);
+        OutputOrbiterStatistics(renderer, text, font);
 
         var bottomY = renderer.Surface.Resolution.Y;
         renderer.TextBatcher.Write(
@@ -393,18 +434,97 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     private void OutputTestVelocity(Renderer renderer, TextBuilder text, Font font)
     {
+        if (!hasTestOrbiter)
+        {
+            return;
+        }
+
         Simulation.Bodies.GetDescription(testHandle, out var description);
         var velocity = description.Velocity.Linear;
         var absoluteVelocity = Math.Sqrt(velocity.X * velocity.X + velocity.Y * velocity.Y + velocity.Z * velocity.Z);
         var angular = description.Velocity.Angular;
         var absoluteAngular = Math.Sqrt(angular.X * angular.X + angular.Y * angular.Y + angular.Z * angular.Z);
-        var message = $"Velocity: ({velocity.X}, {velocity.Y}, {velocity.Z}), absolute velocity: {absoluteVelocity}, " +
-                      $"angunar: ({angular.X}, {angular.Y}, {angular.Z}), absolute angular: {absoluteAngular}.";
+        var message = $"Velocity: ({velocity.X:F2}, {velocity.Y:F2}, {velocity.Z:F2}), absolute velocity: {absoluteVelocity:F2}, " +
+                      $"angunar: ({angular.X:F2}, {angular.Y:F2}, {angular.Z:F2}), absolute angular: {absoluteAngular:F2}.";
 
         var bottomY = renderer.Surface.Resolution.Y;
         renderer.TextBatcher.Write(
             text.Clear().Append(message),
             new Vector2(16, bottomY - 64), 16, Vector3.One, font);
+    }
+
+    private void OutputOrbiterStatistics(Renderer renderer, TextBuilder text, Font font)
+    {
+        if (!hasOrbiters)
+        {
+            return;
+        }
+
+        orbiterStatisticsCallCount++;
+
+        // Only calculate statistics every N calls
+        if (orbiterStatisticsCallCount % orbiterStatisticsReportingFrequency == 0)
+        {
+            float totalSpeedX = 0, totalSpeedY = 0, totalSpeedZ = 0;
+            float totalAbsoluteSpeed = 0;
+            float totalAngularX = 0, totalAngularY = 0, totalAngularZ = 0;
+            float totalAbsoluteAngular = 0;
+            float totalPositionX = 0, totalPositionY = 0, totalPositionZ = 0;
+            float totalAbsolutePosition = 0;
+
+            var orbiterCount = orbiterHandles.Length;
+
+            foreach (var handle in orbiterHandles)
+            {
+                Simulation.Bodies.GetDescription(handle, out var description);
+
+                var velocity = description.Velocity.Linear;
+                var angular = description.Velocity.Angular;
+                var position = description.Pose.Position;
+
+                totalSpeedX += velocity.X;
+                totalSpeedY += velocity.Y;
+                totalSpeedZ += velocity.Z;
+                totalAbsoluteSpeed +=
+                    (float)Math.Sqrt(velocity.X * velocity.X + velocity.Y * velocity.Y + velocity.Z * velocity.Z);
+
+                totalAngularX += angular.X;
+                totalAngularY += angular.Y;
+                totalAngularZ += angular.Z;
+                totalAbsoluteAngular +=
+                    (float)Math.Sqrt(angular.X * angular.X + angular.Y * angular.Y + angular.Z * angular.Z);
+
+                totalPositionX += position.X;
+                totalPositionY += position.Y;
+                totalPositionZ += position.Z;
+                totalAbsolutePosition +=
+                    (float)Math.Sqrt(position.X * position.X + position.Y * position.Y + position.Z * position.Z);
+            }
+
+            // Calculate averages
+            averageSpeed = new Vector3(totalSpeedX / orbiterCount, totalSpeedY / orbiterCount,
+                totalSpeedZ / orbiterCount);
+            averageAbsoluteSpeed = totalAbsoluteSpeed / orbiterCount;
+
+            averageAngularSpeed = new Vector3(totalAngularX / orbiterCount, totalAngularY / orbiterCount,
+                totalAngularZ / orbiterCount);
+            averageAbsoluteAngularSpeed = totalAbsoluteAngular / orbiterCount;
+
+            averagePosition = new Vector3(totalPositionX / orbiterCount, totalPositionY / orbiterCount,
+                totalPositionZ / orbiterCount);
+            averageAbsolutePosition = totalAbsolutePosition / orbiterCount;
+        }
+
+        var message =
+            $"Orbiters (call {orbiterStatisticsCallCount}): avg speed: ({averageSpeed.X:F2}, {averageSpeed.Y:F2}, {averageSpeed.Z:F2}), " +
+            $"avg absolute speed: {averageAbsoluteSpeed:F2}, " +
+            $"avg angular: ({averageAngularSpeed.X:F2}, {averageAngularSpeed.Y:F2}, {averageAngularSpeed.Z:F2}), avg absolute angular: {averageAbsoluteAngularSpeed:F2}, " +
+            $"avg position: ({averagePosition.X:F2}, {averagePosition.Y:F2}, {averagePosition.Z:F2}), avg absolute position: {averageAbsolutePosition:F2}.";
+
+        var bottomY = renderer.Surface.Resolution.Y;
+        renderer.TextBatcher.Write(
+            text.Clear().Append(message),
+            new Vector2(16, bottomY - 80), 16, Vector3.One, font);
     }
 
     #endregion
