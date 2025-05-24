@@ -121,6 +121,10 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     private float averageAbsoluteAngularSpeed = 0;
     private Vector3 averagePosition = Vector3.Zero;
     private float averageAbsolutePosition = 0;
+    private float averageKineticEnergy = 0;
+    private float averagePotentialEnergy = 0;
+    private float averageTotalEnergy = 0;
+    private float minimumAbsolutePosition = 0;
 
     #endregion
 
@@ -197,7 +201,9 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     private void CreatePlanet()
     {
-        PlanetHandle = Simulation.Statics.Add(new StaticDescription(PlanetCenter, Simulation.Shapes.Add(new Sphere(PlanetRadius))));
+        PlanetHandle =
+            Simulation.Statics.Add(new StaticDescription(PlanetCenter,
+                Simulation.Shapes.Add(new Sphere(PlanetRadius))));
         // Simulation.Statics.Add(new StaticDescription(new Vector3(), Simulation.Shapes.Add(new Cylinder(20, 100))));
 
         // var sphereShape = new Sphere(50);
@@ -253,7 +259,8 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     private void CreateMeshSphere()
     {
-        var planetMesh = PlanetMeshCreator.CreatePlanetMesh(PlanetRadius, subDivisionSteps, scalingVector, BufferPool, ThreadDispatcher);
+        var planetMesh = PlanetMeshCreator.CreatePlanetMesh(PlanetRadius, subDivisionSteps, scalingVector, BufferPool,
+            ThreadDispatcher);
         Simulation.Statics.Add(new StaticDescription(position, rotation, Simulation.Shapes.Add(planetMesh)));
     }
 
@@ -281,7 +288,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
             thickness: thickness,
             numberOfLayers: numberOfLayers,
             skewedness: 2,
-            width : PlanetRadius / 4,
+            width: PlanetRadius / 4,
             height: PlanetRadius / 4,
             scaling: scalingVector,
             BufferPool,
@@ -300,7 +307,9 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         var orbiter = new Sphere(orbiterRadius);
         var inertia = orbiter.ComputeInertia(orbiterMass);
         var orbiterShapeIndex = Simulation.Shapes.Add(orbiter);
-        testHandle = Simulation.Bodies.Add(BodyDescription.CreateDynamic(testOrigin, testVelocity, inertia, orbiterShapeIndex, activity));
+        testHandle =
+            Simulation.Bodies.Add(BodyDescription.CreateDynamic(testOrigin, testVelocity, inertia, orbiterShapeIndex,
+                activity));
     }
 
     private BodyHandle CreateTestOrbiter2()
@@ -309,7 +318,9 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         var inertia = orbiter.ComputeInertia(orbiterMass);
         var orbiterShapeIndex = Simulation.Shapes.Add(orbiter);
 
-        var handle = Simulation.Bodies.Add(BodyDescription.CreateDynamic(testOrigin2, testVelocity2, inertia, orbiterShapeIndex, activity));
+        var handle =
+            Simulation.Bodies.Add(BodyDescription.CreateDynamic(testOrigin2, testVelocity2, inertia, orbiterShapeIndex,
+                activity));
         return handle;
     }
 
@@ -329,8 +340,10 @@ public class PlanetNonRotatingMoleculesDemo : Demo
                 var origin = mainOrigin + spacing * new Vector3(length * -0.5f, 0, width * -0.5f);
                 for (var k = 0; k < width; ++k)
                 {
-                    orbiterHandles[k * length * height + j * length + i] = Simulation.Bodies.Add(BodyDescription.CreateDynamic(
-                        origin + new Vector3(i, j, k) * spacing, mainVelocity, inertia, orbiterShapeIndex, activity));
+                    orbiterHandles[k * length * height + j * length + i] = Simulation.Bodies.Add(
+                        BodyDescription.CreateDynamic(
+                            origin + new Vector3(i, j, k) * spacing, mainVelocity, inertia, orbiterShapeIndex,
+                            activity));
                 }
             }
         }
@@ -350,7 +363,8 @@ public class PlanetNonRotatingMoleculesDemo : Demo
                 for (var k = 0; k < width; ++k)
                 {
                     Simulation.Bodies.Add(BodyDescription.CreateDynamic(
-                        origin + new Vector3(i, j, k) * spacing, mainMoleculeVelocity, moleculeInertia, moleculeShapeIndex, activity));
+                        origin + new Vector3(i, j, k) * spacing, mainMoleculeVelocity, moleculeInertia,
+                        moleculeShapeIndex, activity));
                 }
             }
         }
@@ -444,8 +458,9 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         var absoluteVelocity = Math.Sqrt(velocity.X * velocity.X + velocity.Y * velocity.Y + velocity.Z * velocity.Z);
         var angular = description.Velocity.Angular;
         var absoluteAngular = Math.Sqrt(angular.X * angular.X + angular.Y * angular.Y + angular.Z * angular.Z);
-        var message = $"Velocity: ({velocity.X:F2}, {velocity.Y:F2}, {velocity.Z:F2}), absolute velocity: {absoluteVelocity:F2}, " +
-                      $"angunar: ({angular.X:F2}, {angular.Y:F2}, {angular.Z:F2}), absolute angular: {absoluteAngular:F2}.";
+        var message =
+            $"Velocity: ({velocity.X:F2}, {velocity.Y:F2}, {velocity.Z:F2}), absolute velocity: {absoluteVelocity:F2}, " +
+            $"angunar: ({angular.X:F2}, {angular.Y:F2}, {angular.Z:F2}), absolute angular: {absoluteAngular:F2}.";
 
         var bottomY = renderer.Surface.Resolution.Y;
         renderer.TextBatcher.Write(
@@ -465,66 +480,107 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         // Only calculate statistics every N calls
         if (orbiterStatisticsCallCount % orbiterStatisticsReportingFrequency == 0)
         {
-            float totalSpeedX = 0, totalSpeedY = 0, totalSpeedZ = 0;
-            float totalAbsoluteSpeed = 0;
-            float totalAngularX = 0, totalAngularY = 0, totalAngularZ = 0;
-            float totalAbsoluteAngular = 0;
-            float totalPositionX = 0, totalPositionY = 0, totalPositionZ = 0;
-            float totalAbsolutePosition = 0;
-
-            var orbiterCount = orbiterHandles.Length;
-
-            foreach (var handle in orbiterHandles)
-            {
-                Simulation.Bodies.GetDescription(handle, out var description);
-
-                var velocity = description.Velocity.Linear;
-                var angular = description.Velocity.Angular;
-                var position = description.Pose.Position;
-
-                totalSpeedX += velocity.X;
-                totalSpeedY += velocity.Y;
-                totalSpeedZ += velocity.Z;
-                totalAbsoluteSpeed +=
-                    (float)Math.Sqrt(velocity.X * velocity.X + velocity.Y * velocity.Y + velocity.Z * velocity.Z);
-
-                totalAngularX += angular.X;
-                totalAngularY += angular.Y;
-                totalAngularZ += angular.Z;
-                totalAbsoluteAngular +=
-                    (float)Math.Sqrt(angular.X * angular.X + angular.Y * angular.Y + angular.Z * angular.Z);
-
-                totalPositionX += position.X;
-                totalPositionY += position.Y;
-                totalPositionZ += position.Z;
-                totalAbsolutePosition +=
-                    (float)Math.Sqrt(position.X * position.X + position.Y * position.Y + position.Z * position.Z);
-            }
-
-            // Calculate averages
-            averageSpeed = new Vector3(totalSpeedX / orbiterCount, totalSpeedY / orbiterCount,
-                totalSpeedZ / orbiterCount);
-            averageAbsoluteSpeed = totalAbsoluteSpeed / orbiterCount;
-
-            averageAngularSpeed = new Vector3(totalAngularX / orbiterCount, totalAngularY / orbiterCount,
-                totalAngularZ / orbiterCount);
-            averageAbsoluteAngularSpeed = totalAbsoluteAngular / orbiterCount;
-
-            averagePosition = new Vector3(totalPositionX / orbiterCount, totalPositionY / orbiterCount,
-                totalPositionZ / orbiterCount);
-            averageAbsolutePosition = totalAbsolutePosition / orbiterCount;
+            CalculateOrbiterStatistics();
         }
 
-        var message =
+        DisplayOrbiterStatistics(renderer, text, font);
+    }
+
+    private void CalculateOrbiterStatistics()
+    {
+        float totalSpeedX = 0, totalSpeedY = 0, totalSpeedZ = 0;
+        float totalAbsoluteSpeed = 0;
+        float totalAngularX = 0, totalAngularY = 0, totalAngularZ = 0;
+        float totalAbsoluteAngular = 0;
+        float totalPositionX = 0, totalPositionY = 0, totalPositionZ = 0;
+        float totalAbsolutePosition = 0;
+        float totalKineticEnergy = 0;
+        float totalPotentialEnergy = 0;
+        float minAbsolutePosition = float.MaxValue;
+
+        var orbiterCount = orbiterHandles.Length;
+
+        foreach (var handle in orbiterHandles)
+        {
+            Simulation.Bodies.GetDescription(handle, out var description);
+
+            var velocity = description.Velocity.Linear;
+            var angular = description.Velocity.Angular;
+            var position = description.Pose.Position;
+
+            totalSpeedX += velocity.X;
+            totalSpeedY += velocity.Y;
+            totalSpeedZ += velocity.Z;
+            float absoluteSpeed =
+                (float)Math.Sqrt(velocity.X * velocity.X + velocity.Y * velocity.Y + velocity.Z * velocity.Z);
+            totalAbsoluteSpeed += absoluteSpeed;
+
+            totalAngularX += angular.X;
+            totalAngularY += angular.Y;
+            totalAngularZ += angular.Z;
+            totalAbsoluteAngular +=
+                (float)Math.Sqrt(angular.X * angular.X + angular.Y * angular.Y + angular.Z * angular.Z);
+
+            totalPositionX += position.X;
+            totalPositionY += position.Y;
+            totalPositionZ += position.Z;
+            float absolutePosition =
+                (float)Math.Sqrt(position.X * position.X + position.Y * position.Y + position.Z * position.Z);
+            totalAbsolutePosition += absolutePosition;
+
+            // Energy calculations
+            float kineticEnergy = (absoluteSpeed * absoluteSpeed) / 2.0f;
+            totalKineticEnergy += kineticEnergy;
+
+            float potentialEnergy = (-gravityValue) / absolutePosition;
+            totalPotentialEnergy += potentialEnergy;
+
+            // Track minimum absolute position
+            if (absolutePosition < minAbsolutePosition)
+            {
+                minAbsolutePosition = absolutePosition;
+            }
+        }
+
+        // Calculate averages
+        averageSpeed = new Vector3(totalSpeedX / orbiterCount, totalSpeedY / orbiterCount, totalSpeedZ / orbiterCount);
+        averageAbsoluteSpeed = totalAbsoluteSpeed / orbiterCount;
+
+        averageAngularSpeed = new Vector3(totalAngularX / orbiterCount, totalAngularY / orbiterCount,
+            totalAngularZ / orbiterCount);
+        averageAbsoluteAngularSpeed = totalAbsoluteAngular / orbiterCount;
+
+        averagePosition = new Vector3(totalPositionX / orbiterCount, totalPositionY / orbiterCount,
+            totalPositionZ / orbiterCount);
+        averageAbsolutePosition = totalAbsolutePosition / orbiterCount;
+
+        averageKineticEnergy = totalKineticEnergy / orbiterCount;
+        averagePotentialEnergy = totalPotentialEnergy / orbiterCount;
+        averageTotalEnergy = averageKineticEnergy + averagePotentialEnergy;
+        minimumAbsolutePosition = minAbsolutePosition;
+    }
+
+    private void DisplayOrbiterStatistics(Renderer renderer, TextBuilder text, Font font)
+    {
+        var bottomY = renderer.Surface.Resolution.Y;
+
+        var message1 =
             $"Orbiters (call {orbiterStatisticsCallCount}): avg speed: ({averageSpeed.X:F2}, {averageSpeed.Y:F2}, {averageSpeed.Z:F2}), " +
             $"avg absolute speed: {averageAbsoluteSpeed:F2}, " +
             $"avg angular: ({averageAngularSpeed.X:F2}, {averageAngularSpeed.Y:F2}, {averageAngularSpeed.Z:F2}), avg absolute angular: {averageAbsoluteAngularSpeed:F2}, " +
             $"avg position: ({averagePosition.X:F2}, {averagePosition.Y:F2}, {averagePosition.Z:F2}), avg absolute position: {averageAbsolutePosition:F2}.";
 
-        var bottomY = renderer.Surface.Resolution.Y;
+        var message2 =
+            $"Energy: avg kinetic: {averageKineticEnergy:F2}, avg potential: {averagePotentialEnergy:F2}, avg total: {averageTotalEnergy:F2}, " +
+            $"min absolute position: {minimumAbsolutePosition:F2}.";
+
         renderer.TextBatcher.Write(
-            text.Clear().Append(message),
+            text.Clear().Append(message1),
             new Vector2(16, bottomY - 80), 16, Vector3.One, font);
+
+        renderer.TextBatcher.Write(
+            text.Clear().Append(message2),
+            new Vector2(16, bottomY - 96), 16, Vector3.One, font);
     }
 
     #endregion
