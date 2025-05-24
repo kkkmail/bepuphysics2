@@ -127,6 +127,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     private float minimumAbsolutePosition = 0;
     private float maximumAbsolutePosition = 0;
     private int orbitersInsidePlanet = 0;
+    private int runawayOrbiters = 0;
     private Vector3 averageAngularMomentum = Vector3.Zero;
     private float averageAbsoluteAngularMomentum = 0;
 
@@ -505,6 +506,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         float minAbsolutePosition = float.MaxValue;
         float maxAbsolutePosition = float.MinValue;
         int insidePlanetCount = 0;
+        int runawayCount = 0;
         float totalAngularMomentumX = 0, totalAngularMomentumY = 0, totalAngularMomentumZ = 0;
 
         var orbiterCount = orbiterHandles.Length;
@@ -561,6 +563,13 @@ public class PlanetNonRotatingMoleculesDemo : Demo
                 insidePlanetCount++;
             }
 
+            // Count runaway orbiters (where kinetic energy exceeds escape energy)
+            float escapeEnergy = (absoluteSpeed * absoluteSpeed) / 2.0f - gravityValue / absolutePosition;
+            if (escapeEnergy > 0)
+            {
+                runawayCount++;
+            }
+
             // Angular momentum calculation: L = r × v (cross product)
             Vector3 angularMomentum = Vector3.Cross(position, velocity);
             totalAngularMomentumX += angularMomentum.X;
@@ -587,6 +596,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         maximumAbsolutePosition = maxAbsolutePosition;
 
         orbitersInsidePlanet = insidePlanetCount;
+        runawayOrbiters = runawayCount;
         averageAngularMomentum = new Vector3(totalAngularMomentumX / orbiterCount, totalAngularMomentumY / orbiterCount,
             totalAngularMomentumZ / orbiterCount);
         averageAbsoluteAngularMomentum = (float)Math.Sqrt(averageAngularMomentum.X * averageAngularMomentum.X +
@@ -606,7 +616,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
         var message2 =
             $"Energy: avg kinetic: {averageKineticEnergy:F2}, avg potential: {averagePotentialEnergy:F2}, avg total: {averageTotalEnergy:F2}, " +
-            $"min absolute position: {minimumAbsolutePosition:F2}, max absolute position: {maximumAbsolutePosition:F2}, inside planet: {orbitersInsidePlanet}, " +
+            $"min absolute position: {minimumAbsolutePosition:F2}, max absolute position: {maximumAbsolutePosition:F2}, inside planet: {orbitersInsidePlanet}, runaway: {runawayOrbiters}, " +
             $"avg angular momentum: ({averageAngularMomentum.X:F2}, {averageAngularMomentum.Y:F2}, {averageAngularMomentum.Z:F2}), abs: {averageAbsoluteAngularMomentum:F2}.";
 
         renderer.TextBatcher.Write(
