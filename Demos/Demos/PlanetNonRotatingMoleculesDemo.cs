@@ -127,6 +127,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     private float averagePotentialEnergy = 0;
     private float averageTotalEnergy = 0;
     private float minimumAbsolutePosition = 0;
+    private float maximumAbsolutePosition = 0;
     private int orbitersInsidePlanet = 0;
     private Vector3 averageAngularMomentum = Vector3.Zero;
     private float averageAbsoluteAngularMomentum = 0;
@@ -504,6 +505,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         float totalKineticEnergy = 0;
         float totalPotentialEnergy = 0;
         float minAbsolutePosition = float.MaxValue;
+        float maxAbsolutePosition = float.MinValue;
         int insidePlanetCount = 0;
         float totalAngularMomentumX = 0, totalAngularMomentumY = 0, totalAngularMomentumZ = 0;
 
@@ -544,10 +546,15 @@ public class PlanetNonRotatingMoleculesDemo : Demo
             float potentialEnergy = (-gravityValue) / absolutePosition;
             totalPotentialEnergy += potentialEnergy;
 
-            // Track minimum absolute position
+            // Track minimum and maximum absolute position
             if (absolutePosition < minAbsolutePosition)
             {
                 minAbsolutePosition = absolutePosition;
+            }
+
+            if (absolutePosition > maxAbsolutePosition)
+            {
+                maxAbsolutePosition = absolutePosition;
             }
 
             // Count orbiters inside planet
@@ -579,6 +586,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         averagePotentialEnergy = totalPotentialEnergy / orbiterCount;
         averageTotalEnergy = averageKineticEnergy + averagePotentialEnergy;
         minimumAbsolutePosition = minAbsolutePosition;
+        maximumAbsolutePosition = maxAbsolutePosition;
 
         orbitersInsidePlanet = insidePlanetCount;
         averageAngularMomentum = new Vector3(totalAngularMomentumX / orbiterCount, totalAngularMomentumY / orbiterCount,
@@ -600,7 +608,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
         var message2 =
             $"Energy: avg kinetic: {averageKineticEnergy:F2}, avg potential: {averagePotentialEnergy:F2}, avg total: {averageTotalEnergy:F2}, " +
-            $"min absolute position: {minimumAbsolutePosition:F2}, inside planet: {orbitersInsidePlanet}, " +
+            $"min absolute position: {minimumAbsolutePosition:F2}, max absolute position: {maximumAbsolutePosition:F2}, inside planet: {orbitersInsidePlanet}, " +
             $"avg angular momentum: ({averageAngularMomentum.X:F2}, {averageAngularMomentum.Y:F2}, {averageAngularMomentum.Z:F2}), abs: {averageAbsoluteAngularMomentum:F2}.";
 
         renderer.TextBatcher.Write(
