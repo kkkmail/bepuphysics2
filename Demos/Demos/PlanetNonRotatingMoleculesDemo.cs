@@ -20,11 +20,31 @@ namespace Demos.Demos;
 /// </summary>
 public class PlanetNonRotatingMoleculesDemo : Demo
 {
+    #region Control Parameters
+
+    private bool moveWall = false;
+
+    #endregion
+
+    #region Camera and Output
+
+    private string prefix =>
+        $"{(moveWall ? "Piston" : "Static")}" +
+        "_R" + $"{(int)(moleculeRadius * 1000)}".PadLeft(4, '0') +
+        "_V" + $"{(int)mainMoleculeVelocity}".PadLeft(3, '0') +
+        (moveWall ? "_W" + $"{(int)wallSpeed}".PadLeft(3, '0') : "");
+
     private const string exportFolder = "C:\\PlanetNonRotatingMoleculesDemo";
     // private Vector3 cameraPosition = new Vector3(-110, 80, -50);
-    private Vector3 cameraPosition = new Vector3(-110, 80, -50) * 7;
+    // private Vector3 cameraPosition = new Vector3(-110, 80, -50) * 7;
+    private Vector3 cameraPosition = new Vector3(-60, 90, -30) * 25;
+
+    #endregion
 
     #region Box with molecules
+
+    const float moleculeRadius = 2.000f;
+    const float mainMoleculeVelocity = 20f;
 
     // const int count = 40;
     const int count = 50;
@@ -33,8 +53,8 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     #region mainMoleculeVelocity = 20f;
 
-    float mainMoleculeVelocity = 20f;
-    const float moleculeRadius = 1.000f;
+    // float mainMoleculeVelocity = 20f;
+    // const float moleculeRadius = 1.000f;
 
     int velocityIterationCount = 8;
     int substepCount = 1;
@@ -178,7 +198,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     # region Statistics
 
     private int orbiterStatisticsCallCount = -1;
-    private int orbiterStatisticsReportingFrequency = 100;
+    private int orbiterStatisticsReportingFrequency = 50;
     private Vector3 averageSpeed = Vector3.Zero;
     private float averageAbsoluteSpeed;
     private Vector3 averageAngularSpeed = Vector3.Zero;
@@ -201,7 +221,6 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     #region Box Parameters
 
-    private bool moveWall = true;
     private bool hasBox;
 
     // private const float boxWallThickness = 2f;
@@ -209,7 +228,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     // private const float boxLength = 400f;
     // private const float boxHeight = 400f;
 
-    private const float boxWallThickness = 50f;
+    private const float boxWallThickness = 1_000f;
     private const float boxWidthInternal = 600f;
     private const float boxLengthInternal = 600f;
     private const float boxHeightInternal = 600f;
@@ -232,7 +251,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     // private const float wallStaticTime = 1 * 60f;
 
     private const float wallMovementTime = 30f;
-    private const float wallStaticTime = 30f;
+    private const float wallStaticTime = 90f;
     private const float wallFirstStaticTime = 300f;
 
     private const float wallPeriodTime = 2 * (wallMovementTime + wallStaticTime);
@@ -706,12 +725,12 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         statisticsHistory.Add(stats);
     }
 
-    private void ExportToCsv(string outputFolder)
+    private void ExportToCsv(string prefix, string outputFolder)
     {
         Directory.CreateDirectory(outputFolder);
 
         var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        var fileName = $"{timestamp}.csv";
+        var fileName = $"{prefix}__{timestamp}.csv";
         var filePath = Path.Combine(outputFolder, fileName);
 
         using var writer = new StreamWriter(filePath);
@@ -1024,6 +1043,6 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     protected override void OnDispose()
     {
-        ExportToCsv(exportFolder);
+        ExportToCsv(prefix, exportFolder);
     }
 }
