@@ -34,7 +34,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     #region mainMoleculeVelocity = 20f;
 
     float mainMoleculeVelocity = 20f;
-    const float moleculeRadius = 1.00f;
+    const float moleculeRadius = 1.000f;
 
     int velocityIterationCount = 8;
     int substepCount = 1;
@@ -180,20 +180,20 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     private int orbiterStatisticsCallCount = -1;
     private int orbiterStatisticsReportingFrequency = 100;
     private Vector3 averageSpeed = Vector3.Zero;
-    private float averageAbsoluteSpeed = 0;
+    private float averageAbsoluteSpeed;
     private Vector3 averageAngularSpeed = Vector3.Zero;
-    private float averageAbsoluteAngularSpeed = 0;
+    private float averageAbsoluteAngularSpeed;
     private Vector3 averagePosition = Vector3.Zero;
-    private float averageAbsolutePosition = 0;
-    private float averageKineticEnergy = 0;
-    private float averagePotentialEnergy = 0;
-    private float averageTotalEnergy = 0;
-    private float minimumAbsolutePosition = 0;
-    private float maximumAbsolutePosition = 0;
-    private int orbitersInsidePlanet = 0;
-    private int runawayOrbiters = 0;
+    private float averageAbsolutePosition;
+    private float averageKineticEnergy;
+    private float averagePotentialEnergy;
+    private float averageTotalEnergy;
+    private float minimumAbsolutePosition;
+    private float maximumAbsolutePosition;
+    private int orbitersInsidePlanet;
+    private int runawayOrbiters;
     private Vector3 averageAngularMomentum = Vector3.Zero;
-    private float averageAbsoluteAngularMomentum = 0;
+    private float averageAbsoluteAngularMomentum;
 
     #endregion
 
