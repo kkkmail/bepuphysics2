@@ -242,36 +242,24 @@ namespace DemoRenderer
 
             #endregion
 
-            #region V1 - Insanely slow
-
-            // var spheres = Shapes.ShapeCache.Spheres;
-            //
-            // for (var i = 0; i < Shapes.ShapeCache.Spheres.Count; i++)
-            // {
-            //     var sphere = spheres[i];
-            //     SphereRenderer.Render(context, camera, Surface.Resolution, [sphere], 0, 1);
-            // }
-
-            #endregion
-
             #region V2
 
-            unsafe
-            {
-                for (var i = 0; i < Shapes.ShapeCache.Spheres.Count; i++)
-                {
-                    var sphere = Shapes.ShapeCache.Spheres.Span.GetPointer(i);
-
-                    if ((*sphere).Radius > 2)
-                    {
-                        // (*sphere).PackedColor = 0xFFFFFF00;
-                        // (*sphere).PackedColor = 0xFFFFFFFF;
-                        // (*sphere).PackedColor = 0x80FFFFFF;
-                        // (*sphere).PackedColor = 0xFFFFFF20;
-                        // (*sphere).PackedColor = 0xFFFFFF00;
-                    }
-                }
-            }
+            // unsafe
+            // {
+            //     for (var i = 0; i < Shapes.ShapeCache.Spheres.Count; i++)
+            //     {
+            //         var sphere = Shapes.ShapeCache.Spheres.Span.GetPointer(i);
+            //
+            //         if ((*sphere).Radius > 2)
+            //         {
+            //             // (*sphere).PackedColor = 0xFFFFFF00;
+            //             // (*sphere).PackedColor = 0xFFFFFFFF;
+            //             // (*sphere).PackedColor = 0x80FFFFFF;
+            //             // (*sphere).PackedColor = 0xFFFFFF20;
+            //             // (*sphere).PackedColor = 0xFFFFFF00;
+            //         }
+            //     }
+            // }
 
             SphereRenderer.Render(context, camera, Surface.Resolution, Shapes.ShapeCache.Spheres.Span, 0, Shapes.ShapeCache.Spheres.Count);
 
@@ -327,19 +315,19 @@ namespace DemoRenderer
 
             #region V2
 
-            unsafe
-            {
-                for (var i = 0; i < Shapes.ShapeCache.Meshes.Count; i++)
-                {
-                    var mesh = Shapes.ShapeCache.Meshes.Span.GetPointer(i);
-                    // (*mesh).PackedColor = 0xFFFFFFFF;
-                    // (*mesh).PackedColor = 0x80FFFFFF;
-                    (*mesh).PackedColor = 0xFFFFFF80;
-                    // (*mesh).PackedColor = 0xFFFFFF40;
-                    // (*mesh).PackedColor = 0xFFFFFF20;
-                    // (*mesh).PackedColor = 0xFFFFFF00;
-                }
-            }
+            // unsafe
+            // {
+            //     for (var i = 0; i < Shapes.ShapeCache.Meshes.Count; i++)
+            //     {
+            //         var mesh = Shapes.ShapeCache.Meshes.Span.GetPointer(i);
+            //         // (*mesh).PackedColor = 0xFFFFFFFF;
+            //         // (*mesh).PackedColor = 0x80FFFFFF;
+            //         (*mesh).PackedColor = 0xFFFFFF80;
+            //         // (*mesh).PackedColor = 0xFFFFFF40;
+            //         // (*mesh).PackedColor = 0xFFFFFF20;
+            //         // (*mesh).PackedColor = 0xFFFFFF00;
+            //     }
+            // }
 
             MeshRenderer.Render(context, camera, Surface.Resolution, Shapes.ShapeCache.Meshes.Span, 0, Shapes.ShapeCache.Meshes.Count);
 

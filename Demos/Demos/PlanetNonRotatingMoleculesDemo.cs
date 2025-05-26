@@ -7,7 +7,11 @@ using DemoRenderer;
 using DemoRenderer.UI;
 using DemoUtilities;
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
+using System.Reflection;
+using System.Text;
 
 namespace Demos.Demos;
 
@@ -16,6 +20,54 @@ namespace Demos.Demos;
 /// </summary>
 public class PlanetNonRotatingMoleculesDemo : Demo
 {
+    private const string exportFolder = "C:\\PlanetNonRotatingMoleculesDemo";
+    // private Vector3 cameraPosition = new Vector3(-110, 80, -50);
+    private Vector3 cameraPosition = new Vector3(-110, 80, -50) * 7;
+
+    #region Box with molecules
+
+    // const int count = 40;
+    const int count = 50;
+
+    private const float minSpacingDistance = 5f;
+
+    #region mainMoleculeVelocity = 20f;
+
+    float mainMoleculeVelocity = 20f;
+    const float moleculeRadius = 1.00f;
+
+    int velocityIterationCount = 8;
+    int substepCount = 1;
+    float frequency = 5.0f;
+    // float dampingRatio = -0.2625f;
+    // float dampingRatio = -0.2623f;
+    // float dampingRatio = -0.2622f;
+    // float dampingRatio = -0.2621f;
+
+    // float dampingRatio = -0.2620f; // 10 minutes: 50 -> 51.31
+    // float dampingRatio = -0.2619f; // 10 minutes: 50 -> 50.75
+    float dampingRatio = -0.2618f; // 10 minutes: 50 -> 50.28
+
+    // float dampingRatio = -0.26179f; // 10 minutes: 50 -> goes below 50
+    // float dampingRatio = -0.26175f; // 10 minutes: 50 -> goes below 50
+    // float dampingRatio = -0.2617f; // 10 minutes: 50 -> goes below 50
+
+    #endregion
+
+    #region mainMoleculeVelocity = 50f;
+
+    // const float mainMoleculeVelocity = 50f;
+    // const float moleculeRadius = 0.25f;
+    //
+    // int velocityIterationCount = 8;
+    // int substepCount = 1;
+    // float frequency = 5.0f;
+    // float dampingRatio = -0.2618f;
+
+    #endregion
+
+    #endregion
+
     #region Physical Parameters
 
     private float gravityValue;
@@ -36,7 +88,6 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     #endregion
 
-
     #region Mesh Planet - velocityIterationCount: 8, substepCount: 1, frequency: 5.0
 
     float thickness = 5.0f;
@@ -46,15 +97,6 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     // int substepCount = 1;
     // float frequency = 5.0f;
     // float dampingRatio = 0f;
-
-    #endregion
-
-    #region Box with molecules
-
-    int velocityIterationCount = 8;
-    int substepCount = 1;
-    float frequency = 5.0f;
-    float dampingRatio = -0.2625f;
 
     #endregion
 
@@ -96,14 +138,16 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     Vector3 PlanetCenter = new Vector3();
     int subDivisionSteps = 8;
 
-    float orbiterRadius = 1.0f;
-    float orbiterMass = 1.0f;
+    float orbiterRadius = moleculeRadius;
+    float orbiterMass = moleculeMass;
 
-    float moleculeRadius = 0.5f;
-    float moleculeMass = 0.125f;
+    private static int seed = 1;
+    const float moleculeMass = moleculeRadius * moleculeRadius * moleculeRadius;
 
-    // const int count = 40;
-    const int count = 40;
+    Random random = new Random(seed);
+
+    private static float spacingDistance = Math.Max(3 * moleculeRadius, minSpacingDistance);
+    private Vector3 spacing = new Vector3(spacingDistance);
 
     const int length = count;
     const int width = count;
@@ -115,9 +159,6 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     Vector3 mainMoleculeOrigin = new Vector3();
 
     Vector3 mainVelocity = new Vector3();
-    float mainMoleculeVelocity = 20f;
-
-    Vector3 spacing = new Vector3(5);
 
     StaticHandle PlanetHandle;
 
@@ -137,7 +178,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     # region Statistics
 
     private int orbiterStatisticsCallCount = -1;
-    private int orbiterStatisticsReportingFrequency = 10;
+    private int orbiterStatisticsReportingFrequency = 100;
     private Vector3 averageSpeed = Vector3.Zero;
     private float averageAbsoluteSpeed = 0;
     private Vector3 averageAngularSpeed = Vector3.Zero;
@@ -160,10 +201,45 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     #region Box Parameters
 
-    private float boxWallThickness = 2f;
-    private float boxWidth = 400f;
-    private float boxLength = 400f;
-    private float boxHeight = 400f;
+    private bool moveWall = true;
+    private bool hasBox;
+
+    // private const float boxWallThickness = 2f;
+    // private const float boxWidth = 400f;
+    // private const float boxLength = 400f;
+    // private const float boxHeight = 400f;
+
+    private const float boxWallThickness = 50f;
+    private const float boxWidthInternal = 600f;
+    private const float boxLengthInternal = 600f;
+    private const float boxHeightInternal = 600f;
+
+    // private const float boxWallThickness = 2f;
+    // private const float boxWidthInternal = 100f;
+    // private const float boxLengthInternal = 100f;
+    // private const float boxHeightInternal = 100f;
+
+    float boxWidth = boxWidthInternal + boxWallThickness;
+    float boxHeight = boxHeightInternal + boxWallThickness;
+    float boxLength = boxLengthInternal + boxWallThickness;
+
+    private BodyHandle topWallHandle;
+
+    // private const float wallMovementTime = 40f;
+    // private const float wallStaticTime = 20f;
+
+    // private const float wallMovementTime = 30 * 60f;
+    // private const float wallStaticTime = 1 * 60f;
+
+    private const float wallMovementTime = 30f;
+    private const float wallStaticTime = 30f;
+    private const float wallFirstStaticTime = 300f;
+
+    private const float wallPeriodTime = 2 * (wallMovementTime + wallStaticTime);
+    private const float wallMovementLength = 2 * boxHeightInternal / 4;
+    private const float wallSpeed = wallMovementLength / wallMovementTime;
+    private float wallCurrentSpeed;
+    private float wallCurrentPosition;
 
     #endregion
 
@@ -210,11 +286,49 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     #endregion
 
+    #region SimulationStatistics
+
+    private readonly List<SimulationStatistics> statisticsHistory = new();
+
+    public record SimulationStatistics
+    {
+        public required double RealTime { get; init; }
+        public required double SimulationTime { get; init; }
+        public required float WallCurrentSpeed { get; init; }
+        public required float WallCurrentPosition { get; init; }
+        public required int OrbiterStatisticsCallCount { get; init; }
+        public required float AverageSpeedX { get; init; }
+        public required float AverageSpeedY { get; init; }
+        public required float AverageSpeedZ { get; init; }
+        public required float AverageAbsoluteSpeed { get; init; }
+        public required float AverageAngularSpeedX { get; init; }
+        public required float AverageAngularSpeedY { get; init; }
+        public required float AverageAngularSpeedZ { get; init; }
+        public required float AverageAbsoluteAngularSpeed { get; init; }
+        public required float AveragePositionX { get; init; }
+        public required float AveragePositionY { get; init; }
+        public required float AveragePositionZ { get; init; }
+        public required float AverageAbsolutePosition { get; init; }
+        public required float AverageKineticEnergy { get; init; }
+        public required float AveragePotentialEnergy { get; init; }
+        public required float AverageTotalEnergy { get; init; }
+        public required float MinimumAbsolutePosition { get; init; }
+        public required float MaximumAbsolutePosition { get; init; }
+        public required int OrbitersInsidePlanet { get; init; }
+        public required int RunawayOrbiters { get; init; }
+        public required float AverageAngularMomentumX { get; init; }
+        public required float AverageAngularMomentumY { get; init; }
+        public required float AverageAngularMomentumZ { get; init; }
+        public required float AverageAbsoluteAngularMomentum { get; init; }
+    }
+
+    #endregion
+
     #region Helper Methods
 
     private void SetCamera(Camera camera)
     {
-        camera.Position = new Vector3(-110, 80, -50);
+        camera.Position = cameraPosition;
         camera.Yaw = 0;
         camera.Pitch = MathF.PI * -0.5f;
     }
@@ -247,29 +361,102 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     private void CreateBox()
     {
+        hasBox = true;
+        boxWidth = boxWidthInternal + boxWallThickness;
+        boxHeight = boxHeightInternal + boxWallThickness;
+        boxLength = boxLengthInternal + boxWallThickness;
+        wallCurrentPosition = boxHeight / 2;
+
+        #region Left & Right
+
+        // Left
         var wall1Shape = new Box(width: boxWidth + boxWallThickness, height: boxHeight + boxWallThickness, length: boxWallThickness);
         var wall1Position = new Vector3(0, 0, -boxLength / 2);
         Simulation.Statics.Add(new StaticDescription(wall1Position, Simulation.Shapes.Add(wall1Shape)));
 
+        // Right
         var wall2Shape = new Box(width: boxWidth + boxWallThickness, height: boxHeight + boxWallThickness, length: boxWallThickness);
         var wall2Position = new Vector3(0, 0, boxLength / 2);
         Simulation.Statics.Add(new StaticDescription(wall2Position, Simulation.Shapes.Add(wall2Shape)));
 
+        #endregion
+
+        #region Back & Front
+
+        // Back
         var wall3Shape = new Box(width: boxWallThickness, height: boxHeight + boxWallThickness, length: boxLength + boxWallThickness);
         var wall3Position = new Vector3(boxWidth / 2, 0, 0);
         Simulation.Statics.Add(new StaticDescription(wall3Position, Simulation.Shapes.Add(wall3Shape)));
 
+        // Front
         var wall4Shape = new Box(width: boxWallThickness, height: boxHeight + boxWallThickness, length: boxLength + boxWallThickness);
         var wall4Position = new Vector3(-boxWidth / 2, 0, 0);
         Simulation.Statics.Add(new StaticDescription(wall4Position, Simulation.Shapes.Add(wall4Shape)));
 
+        #endregion
+
+        #region Bottom & Top
+
+        // Bottom
         var wall5Shape = new Box(width: boxWidth + boxWallThickness, height: boxWallThickness, length: boxLength + boxWallThickness);
         var wall5Position = new Vector3(0, -boxHeight / 2, 0);
         Simulation.Statics.Add(new StaticDescription(wall5Position, Simulation.Shapes.Add(wall5Shape)));
 
+        #region Top
+
+        // var wall6Shape = new Box(width: boxWidth + boxWallThickness, height: boxWallThickness, length: boxLength + boxWallThickness);
+        // var wall6Position = new Vector3(0, boxHeight / 2, 0);
+        // Simulation.Statics.Add(new StaticDescription(wall6Position, Simulation.Shapes.Add(wall6Shape)));
+
+        // var wall6Shape = new Box(width: boxWidth - 1.1f * boxWallThickness, height: boxWallThickness, length: boxLength - 1.1f * boxWallThickness);
         var wall6Shape = new Box(width: boxWidth + boxWallThickness, height: boxWallThickness, length: boxLength + boxWallThickness);
+        var wall6Index = Simulation.Shapes.Add(wall6Shape);
         var wall6Position = new Vector3(0, boxHeight / 2, 0);
-        Simulation.Statics.Add(new StaticDescription(wall6Position, Simulation.Shapes.Add(wall6Shape)));
+        topWallHandle = Simulation.Bodies.Add(BodyDescription.CreateKinematic((wall6Position, default), wall6Index, -1));
+
+        #endregion
+
+        #endregion
+    }
+
+    private void MoveTopWall(float inverseDt)
+    {
+        if (!hasBox || !moveWall || realTime < wallFirstStaticTime)
+        {
+            wallCurrentSpeed = 0;
+            return;
+        }
+
+        var body = Simulation.Bodies[topWallHandle];
+
+        var wallTime = (realTime - wallFirstStaticTime + wallStaticTime) % wallPeriodTime;
+
+        if (wallTime is < wallStaticTime or >= wallStaticTime + wallMovementTime and < 2 * wallStaticTime + wallMovementTime)
+        {
+            body.Velocity.Linear = default;
+            wallCurrentSpeed = 0;
+            return;
+        }
+
+        Vector3 targetPosition;
+        if (wallTime is >= wallStaticTime and <= wallStaticTime + wallMovementTime)
+        {
+            wallCurrentSpeed = wallSpeed;
+            wallCurrentPosition = (boxHeight / 2) - (float)(wallMovementLength * (wallTime - wallStaticTime) / wallMovementTime);
+            targetPosition = new Vector3(0, wallCurrentPosition, 0);
+        }
+        else
+        {
+            wallCurrentSpeed = -wallSpeed;
+            wallCurrentPosition = (boxHeight / 2) - wallMovementLength + (float)(wallMovementLength *
+                (wallTime - (2 * wallStaticTime + wallMovementTime)) / wallMovementTime);
+
+            targetPosition = new Vector3(0, wallCurrentPosition, 0);
+        }
+
+        //Since it's a kinematic body, we'll compute the current pose error, and then the velocity to correct that error within a single frame.
+        body.Velocity.Linear = (targetPosition - body.Pose.Position) * inverseDt;
+
     }
 
     private void CreateMeshCylinder()
@@ -427,13 +614,131 @@ public class PlanetNonRotatingMoleculesDemo : Demo
                 for (var k = 0; k < width; ++k)
                 {
                     var moleculeVelocity =
-                        mainMoleculeVelocity * new Vector3((j - (height / 2.0f)) / height, (k - (width / 2.0f)) / width, (i - (length / 2.0f)) / length);
+                        mainMoleculeVelocity * new Vector3((float)(random.NextDouble() - 0.5), (float)(random.NextDouble() - 0.5), (float)(random.NextDouble() - 0.5));
 
                     moleculeHandles[k * length * height + j * length + i] = Simulation.Bodies.Add(BodyDescription.CreateDynamic(
                         origin + new Vector3(i, j, k) * spacing, moleculeVelocity, moleculeInertia,
                         moleculeShapeIndex, activity));
                 }
             }
+        }
+    }
+
+    private string GetParametersString()
+    {
+        var sb = new StringBuilder();
+        var type = this.GetType();
+        var fields = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+
+        foreach (var field in fields)
+        {
+            if ((field.FieldType == typeof(int) || field.FieldType == typeof(float)) &&
+                field.IsLiteral == false) // Skip const fields
+            {
+                var value = field.GetValue(field.IsStatic ? null : this);
+                if (value != null) // Only include fields that have been assigned values
+                {
+                    sb.AppendLine($"{field.Name}, {value}");
+                }
+            }
+        }
+
+        // Add const fields manually since they have assigned values
+        sb.AppendLine($"count, {count}");
+        sb.AppendLine($"minSpacingDistance, {minSpacingDistance}");
+        sb.AppendLine($"moleculeRadius, {moleculeRadius}");
+        sb.AppendLine($"testVelocityValue, {testVelocityValue}");
+        sb.AppendLine($"testOriginValue, {testOriginValue}");
+        sb.AppendLine($"seed, {seed}");
+        sb.AppendLine($"moleculeMass, {moleculeMass}");
+        sb.AppendLine($"length, {length}");
+        sb.AppendLine($"width, {width}");
+        sb.AppendLine($"height, {height}");
+        sb.AppendLine($"planetMeshWidth, {planetMeshWidth}");
+        sb.AppendLine($"boxWallThickness, {boxWallThickness}");
+        sb.AppendLine($"boxWidthInternal, {boxWidthInternal}");
+        sb.AppendLine($"boxLengthInternal, {boxLengthInternal}");
+        sb.AppendLine($"boxHeightInternal, {boxHeightInternal}");
+        sb.AppendLine($"wallMovementTime, {wallMovementTime}");
+        sb.AppendLine($"wallStaticTime, {wallStaticTime}");
+        sb.AppendLine($"wallFirstStaticTime, {wallFirstStaticTime}");
+        sb.AppendLine($"wallPeriodTime, {wallPeriodTime}");
+        sb.AppendLine($"wallSpeed, {wallSpeed}");
+        sb.AppendLine($"wallMovementLength, {wallMovementLength}");
+
+        return sb.ToString();
+    }
+
+    private void CollectStatistics()
+    {
+        var stats = new SimulationStatistics
+        {
+            RealTime = realTime,
+            SimulationTime = simulationTime,
+            WallCurrentSpeed = wallCurrentSpeed,
+            WallCurrentPosition = wallCurrentPosition,
+            OrbiterStatisticsCallCount = orbiterStatisticsCallCount,
+            AverageSpeedX = averageSpeed.X,
+            AverageSpeedY = averageSpeed.Y,
+            AverageSpeedZ = averageSpeed.Z,
+            AverageAbsoluteSpeed = averageAbsoluteSpeed,
+            AverageAngularSpeedX = averageAngularSpeed.X,
+            AverageAngularSpeedY = averageAngularSpeed.Y,
+            AverageAngularSpeedZ = averageAngularSpeed.Z,
+            AverageAbsoluteAngularSpeed = averageAbsoluteAngularSpeed,
+            AveragePositionX = averagePosition.X,
+            AveragePositionY = averagePosition.Y,
+            AveragePositionZ = averagePosition.Z,
+            AverageAbsolutePosition = averageAbsolutePosition,
+            AverageKineticEnergy = averageKineticEnergy,
+            AveragePotentialEnergy = averagePotentialEnergy,
+            AverageTotalEnergy = averageTotalEnergy,
+            MinimumAbsolutePosition = minimumAbsolutePosition,
+            MaximumAbsolutePosition = maximumAbsolutePosition,
+            OrbitersInsidePlanet = orbitersInsidePlanet,
+            RunawayOrbiters = runawayOrbiters,
+            AverageAngularMomentumX = averageAngularMomentum.X,
+            AverageAngularMomentumY = averageAngularMomentum.Y,
+            AverageAngularMomentumZ = averageAngularMomentum.Z,
+            AverageAbsoluteAngularMomentum = averageAbsoluteAngularMomentum
+        };
+
+        statisticsHistory.Add(stats);
+    }
+
+    private void ExportToCsv(string outputFolder)
+    {
+        Directory.CreateDirectory(outputFolder);
+
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var fileName = $"{timestamp}.csv";
+        var filePath = Path.Combine(outputFolder, fileName);
+
+        using var writer = new StreamWriter(filePath);
+
+        // Write parameters
+        writer.Write(GetParametersString());
+        writer.WriteLine();
+
+        // Write header
+        var properties = typeof(SimulationStatistics).GetProperties();
+        var headerParts = new string[properties.Length];
+        for (int i = 0; i < properties.Length; i++)
+        {
+            headerParts[i] = properties[i].Name;
+        }
+        writer.WriteLine(string.Join(",", headerParts));
+
+        // Write statistics data
+        foreach (var stats in statisticsHistory)
+        {
+            var values = new string[properties.Length];
+            for (int i = 0; i < properties.Length; i++)
+            {
+                var value = properties[i].GetValue(stats);
+                values[i] = value?.ToString() ?? "";
+            }
+            writer.WriteLine(string.Join(",", values));
         }
     }
 
@@ -463,7 +768,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
         #endregion
 
-        #region orbiters
+        #region Orbiters
 
         // CreateTestOrbiter();
         // CreateTestOrbiter2();
@@ -472,6 +777,21 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         CreateMolecules();
 
         #endregion
+    }
+
+    #endregion
+
+    #region Update
+
+    double realTime;
+    double simulationTime;
+
+    public override void Update(Window window, Camera camera, Input input, float dt)
+    {
+        Simulation.Timestep(TimestepDuration, ThreadDispatcher);
+        MoveTopWall(1f / TimestepDuration);
+        simulationTime += TimestepDuration;
+        realTime += dt;
     }
 
     #endregion
@@ -493,7 +813,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
                     "The IPoseIntegratorCallbacks provided to the simulation is responsible for telling the simulation how to integrate."),
             new Vector2(16, bottomY - 32), 16, Vector3.One, font);
         renderer.TextBatcher.Write(
-            text.Clear().Append("In this demo, all bodies are pulled towards the center of the planet."),
+            text.Clear().Append($"Real time: {realTime:F2}, simulation time: {simulationTime:F2}, wall current speed: {wallCurrentSpeed:F4}, wall top speed: {wallSpeed:F4}."),
             new Vector2(16, bottomY - 16), 16, Vector3.One, font);
 
         // var deviceContext = renderer.Surface.Context;
@@ -559,6 +879,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         if (orbiterStatisticsCallCount % orbiterStatisticsReportingFrequency == 0)
         {
             CalculateOrbiterStatistics(bodyHandles);
+            CollectStatistics();
         }
 
         DisplayOrbiterStatistics(renderer, text, font);
@@ -700,4 +1021,9 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     }
 
     #endregion
+
+    protected override void OnDispose()
+    {
+        ExportToCsv(exportFolder);
+    }
 }

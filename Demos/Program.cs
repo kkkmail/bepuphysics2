@@ -21,6 +21,7 @@ class Program
         var demo = new DemoHarness(loop, content);
         loop.Run(demo);
         loop.Dispose();
+        demo.Dispose();
         window.Dispose();
     }
 }

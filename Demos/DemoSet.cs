@@ -52,6 +52,7 @@ public class DemoSet
         AddOption<CarDemo>();
         AddOption<CustomVoxelCollidableDemo>();
         AddOption<PerBodyGravityDemo>();
+        AddOption<SponsorDemo>();
 
         #endregion
 
