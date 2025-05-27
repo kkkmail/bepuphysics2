@@ -35,9 +35,11 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         (moveWall ? "_W" + $"{(int)wallSpeed}".PadLeft(3, '0') : "");
 
     private const string exportFolder = "C:\\PlanetNonRotatingMoleculesDemo";
-    // private Vector3 cameraPosition = new Vector3(-110, 80, -50);
+    private Vector3 cameraPosition = new Vector3(-110, 80, -50);
+    // private Vector3 cameraPosition = new Vector3(-250, 80, -50);
+    // private Vector3 cameraPosition = new Vector3(-250, 250, -50);
     // private Vector3 cameraPosition = new Vector3(-110, 80, -50) * 7;
-    private Vector3 cameraPosition = new Vector3(-60, 90, -30) * 25;
+    // private Vector3 cameraPosition = new Vector3(-60, 90, -30) * 25;
 
     #endregion
 
@@ -63,10 +65,16 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     #region r = 1.000
 
-    // const float moleculeRadius = 1.000f;
-    // const int count = 50;
-    // const float mainMoleculeVelocity = 20f;
+    const float moleculeRadius = 1.000f;
+    const int count = 50;
+    const float mainMoleculeVelocity = 20f;
+    // float frequency = 5.0f;
     // float dampingRatio = -0.261797f; // Seems OK but goes down a little bit over time.
+
+    // ====================
+
+    float frequency = 30.0f;
+    private float dampingRatio = -0.5f;
 
     #endregion
 
@@ -90,10 +98,10 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     #region r = 0.125
 
-    const float moleculeRadius = 0.125f;
-    const int count = 50;
-    const float mainMoleculeVelocity = 20f;
-    float dampingRatio = -0.2617978f;
+    // const float moleculeRadius = 0.125f;
+    // const int count = 50;
+    // const float mainMoleculeVelocity = 20f;
+    // float dampingRatio = -0.2617978f;
     // float dampingRatio = -0.2617977f; // Goes down to 21.367 after 24,373 seconds after oscillating a lot.
     // float dampingRatio = -0.2617975f; // Seems to go a tiny bit down over time (less than below).
     // float dampingRatio = -0.2617970f; // Seems to go slightly down over time.
@@ -109,7 +117,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     int velocityIterationCount = 8;
     int substepCount = 1;
-    float frequency = 5.0f;
+    // float frequency = 5.0f;
 
     // // float dampingRatio = -0.2625f;
     // // float dampingRatio = -0.2623f;
@@ -198,9 +206,9 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     #region Planetary Parameters
 
-    static float testVelocityValue = 0f;
+    static float testVelocityValue = 10f;
 
-    static float testOriginValue = 500f;
+    static float testOriginValue = 100f;
     Vector3 testOrigin = new Vector3(-testOriginValue, 0, 0);
     Vector3 testOrigin2 = new Vector3(testOriginValue, 0, 0);
     Vector3 testVelocity = new Vector3(testVelocityValue, 0, 0);
@@ -218,7 +226,8 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     Random random = new Random(seed);
 
-    private static float spacingDistance = Math.Max(3 * moleculeRadius, minSpacingDistance);
+    // private static float spacingDistance = Math.Max(3 * moleculeRadius, minSpacingDistance);
+    private static float spacingDistance = 0.8f * boxWidthInternal / count;
     private Vector3 spacing = new Vector3(spacingDistance);
 
     const int length = count;
@@ -675,20 +684,23 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         var moleculeInertia = molecule.ComputeInertia(moleculeMass);
         var moleculeShapeIndex = Simulation.Shapes.Add(molecule);
         moleculeHandles = new BodyHandle[length * height * width];
+        var shift = spacingDistance - 2.1f * moleculeRadius;
+        float nextShift() => shift * (float)(random.NextDouble() - 0.5);
 
         for (var i = 0; i < length; ++i)
         {
             for (var j = 0; j < height; ++j)
             {
-                var origin = mainMoleculeOrigin + spacing * new Vector3(length * -0.5f, 0, width * -0.5f);
+                var origin = mainMoleculeOrigin + spacing * new Vector3(length * -0.5f, height * -0.5f, width * -0.5f);
 
                 for (var k = 0; k < width; ++k)
                 {
-                    var moleculeVelocity =
-                        mainMoleculeVelocity * new Vector3((float)(random.NextDouble() - 0.5), (float)(random.NextDouble() - 0.5), (float)(random.NextDouble() - 0.5));
+                    // var moleculeVelocity =
+                    //     mainMoleculeVelocity * new Vector3((float)(random.NextDouble() - 0.5), (float)(random.NextDouble() - 0.5), (float)(random.NextDouble() - 0.5));
+                    var moleculeVelocity = random.NextVelocity(mainMoleculeVelocity / 2);
 
                     moleculeHandles[k * length * height + j * length + i] = Simulation.Bodies.Add(BodyDescription.CreateDynamic(
-                        origin + new Vector3(i, j, k) * spacing, moleculeVelocity, moleculeInertia,
+                        origin + (new Vector3(i, j, k) + new Vector3(nextShift(), nextShift(), nextShift())) * spacing, moleculeVelocity, moleculeInertia,
                         moleculeShapeIndex, activity));
                 }
             }
@@ -835,17 +847,17 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
         #region Box
 
-        CreateBox();
+        // CreateBox();
 
         #endregion
 
         #region Orbiters
 
-        // CreateTestOrbiter();
-        // CreateTestOrbiter2();
+        CreateTestOrbiter();
+        CreateTestOrbiter2();
 
         // CreateOrbiters();
-        CreateMolecules();
+        // CreateMolecules();
 
         #endregion
     }
