@@ -43,11 +43,62 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     #region Box with molecules
 
-    const float moleculeRadius = 2.000f;
-    const float mainMoleculeVelocity = 20f;
+    // All numbers matter here (including the box size, which is not here).
+    // The negative dampingRatio is the one to tweak to get near energy conservation once all others are fixed.
+    // The fact that the 6-th digit needs to be flipped shows the very high instability of the system.
 
-    // const int count = 40;
+    #region r = 2.000
+
+    // const float moleculeRadius = 2.000f;
+    // const int count = 50;
+    // const float mainMoleculeVelocity = 20f;
+    // // float dampingRatio = -0.2618f; // 10 minutes: 50 -> 53.92
+    // float dampingRatio = -0.261797f;
+    // // float dampingRatio = -0.261796f;
+    // // float dampingRatio = -0.261795f; // 10 minutes: 50 -> slightly oscillates down.
+    // // float dampingRatio = -0.26179f; // 10 minutes: 50 -> 43.3
+    // // float dampingRatio = -0.26175f; // 10 minutes: 50 -> 38.8
+
+    #endregion
+
+    #region r = 1.000
+
+    // const float moleculeRadius = 1.000f;
+    // const int count = 50;
+    // const float mainMoleculeVelocity = 20f;
+    // float dampingRatio = -0.261797f; // Seems OK but goes down a little bit over time.
+
+    #endregion
+
+    #region r = 0.500
+
+    // const float moleculeRadius = 0.500f;
+    // const int count = 50;
+    // const float mainMoleculeVelocity = 20f;
+    // float dampingRatio = -0.261797f;
+
+    #endregion
+
+    #region r = 0.250
+
+    // const float moleculeRadius = 0.250f;
+    // const int count = 50;
+    // const float mainMoleculeVelocity = 20f;
+    // float dampingRatio = -0.261797f;
+
+    #endregion
+
+    #region r = 0.125
+
+    const float moleculeRadius = 0.125f;
     const int count = 50;
+    const float mainMoleculeVelocity = 20f;
+    float dampingRatio = -0.2617978f;
+    // float dampingRatio = -0.2617977f; // Goes down to 21.367 after 24,373 seconds after oscillating a lot.
+    // float dampingRatio = -0.2617975f; // Seems to go a tiny bit down over time (less than below).
+    // float dampingRatio = -0.2617970f; // Seems to go slightly down over time.
+
+    #endregion
 
     private const float minSpacingDistance = 5f;
 
@@ -59,18 +110,19 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     int velocityIterationCount = 8;
     int substepCount = 1;
     float frequency = 5.0f;
-    // float dampingRatio = -0.2625f;
-    // float dampingRatio = -0.2623f;
-    // float dampingRatio = -0.2622f;
-    // float dampingRatio = -0.2621f;
 
-    // float dampingRatio = -0.2620f; // 10 minutes: 50 -> 51.31
-    // float dampingRatio = -0.2619f; // 10 minutes: 50 -> 50.75
-    float dampingRatio = -0.2618f; // 10 minutes: 50 -> 50.28
-
-    // float dampingRatio = -0.26179f; // 10 minutes: 50 -> goes below 50
-    // float dampingRatio = -0.26175f; // 10 minutes: 50 -> goes below 50
-    // float dampingRatio = -0.2617f; // 10 minutes: 50 -> goes below 50
+    // // float dampingRatio = -0.2625f;
+    // // float dampingRatio = -0.2623f;
+    // // float dampingRatio = -0.2622f;
+    // // float dampingRatio = -0.2621f;
+    //
+    // // float dampingRatio = -0.2620f; // 10 minutes: 50 -> 51.31
+    // // float dampingRatio = -0.2619f; // 10 minutes: 50 -> 50.75
+    // float dampingRatio = -0.2618f; // 10 minutes: 50 -> 50.28
+    //
+    // // float dampingRatio = -0.26179f; // 10 minutes: 50 -> goes below 50
+    // // float dampingRatio = -0.26175f; // 10 minutes: 50 -> goes below 50
+    // // float dampingRatio = -0.2617f; // 10 minutes: 50 -> goes below 50
 
     #endregion
 
