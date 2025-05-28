@@ -35,9 +35,9 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         (moveWall ? "_W" + $"{(int)wallSpeed}".PadLeft(3, '0') : "");
 
     private const string exportFolder = "C:\\PlanetNonRotatingMoleculesDemo";
-    private Vector3 cameraPosition = new Vector3(-110, 80, -50);
+    // private Vector3 cameraPosition = new Vector3(-110, 80, -50);
     // private Vector3 cameraPosition = new Vector3(-250, 80, -50);
-    // private Vector3 cameraPosition = new Vector3(-250, 250, -50);
+    private Vector3 cameraPosition = new Vector3(-250, 250, -50);
     // private Vector3 cameraPosition = new Vector3(-110, 80, -50) * 7;
     // private Vector3 cameraPosition = new Vector3(-60, 90, -30) * 25;
 
@@ -49,104 +49,219 @@ public class PlanetNonRotatingMoleculesDemo : Demo
     // The negative dampingRatio is the one to tweak to get near energy conservation once all others are fixed.
     // The fact that the 6-th digit needs to be flipped shows the very high instability of the system.
 
-    #region r = 2.000
-
-    // const float moleculeRadius = 2.000f;
-    // const int count = 50;
-    // const float mainMoleculeVelocity = 20f;
-    // // float dampingRatio = -0.2618f; // 10 minutes: 50 -> 53.92
-    // float dampingRatio = -0.261797f;
-    // // float dampingRatio = -0.261796f;
-    // // float dampingRatio = -0.261795f; // 10 minutes: 50 -> slightly oscillates down.
-    // // float dampingRatio = -0.26179f; // 10 minutes: 50 -> 43.3
-    // // float dampingRatio = -0.26175f; // 10 minutes: 50 -> 38.8
-
-    #endregion
-
-    #region r = 1.000
-
     const float moleculeRadius = 1.000f;
     const int count = 50;
     const float mainMoleculeVelocity = 20f;
-    // float frequency = 5.0f;
-    // float dampingRatio = -0.261797f; // Seems OK but goes down a little bit over time.
+    int velocityIterationCount = 16;
 
-    // ====================
+    #region substepCount = 8, frequency = 30.0f
 
-    float frequency = 30.0f;
-    private float dampingRatio = -0.5f;
-
-    #endregion
-
-    #region r = 0.500
-
-    // const float moleculeRadius = 0.500f;
-    // const int count = 50;
-    // const float mainMoleculeVelocity = 20f;
-    // float dampingRatio = -0.261797f;
+    // int substepCount = 8;
+    // float frequency = 30.0f;
+    // // private float dampingRatio = -0.1990f; // 10.080
+    // // private float dampingRatio = -0.1988f; // 10.075
+    // // private float dampingRatio = -0.1980f; // 10.055
+    // private float dampingRatio = -0.1970f; // 10.030
+    // // private float dampingRatio = -0.1960f; // Passes through with 8.8559
 
     #endregion
 
-    #region r = 0.250
+    #region substepCount = 16, frequency = 100.0f
 
-    // const float moleculeRadius = 0.250f;
-    // const int count = 50;
-    // const float mainMoleculeVelocity = 20f;
-    // float dampingRatio = -0.261797f;
+    // int substepCount = 16;
+    // float frequency = 100.0f;
+    // // private float dampingRatio = -0.3341f; // -9.678
+    // // private float dampingRatio = -0.334170f; // -9.98934
+    //
+    // /// <summary>
+    // /// The speed below is (mainMoleculeVelocity / 2).
+    // /// -0.9966 at 1
+    // /// -1.9953580 at 2
+    // /// -4.99997234 at 5
+    // /// -10.00000000 at 10
+    // /// -17.722 at 25
+    // /// -14.25440216 at 50 - THIS IS VERY BAD
+    // /// -87.8830 at 100
+    // /// </summary>
+    // private float dampingRatio = -0.3341724f;
+    //
+    // // private float dampingRatio = -0.3341725f; // -10.000396
+    // // private float dampingRatio = -0.334175f; // -10.011575
+    // // private float dampingRatio = -0.3342f; // -10.1234
+    // // private float dampingRatio = -0.3343f; // -10.57
+    // // private float dampingRatio = -0.3345f; // -11.49
 
     #endregion
 
-    #region r = 0.125
+    #region substepCount = 32, frequency = 100.0f
 
-    // const float moleculeRadius = 0.125f;
-    // const int count = 50;
-    // const float mainMoleculeVelocity = 20f;
-    // float dampingRatio = -0.2617978f;
-    // float dampingRatio = -0.2617977f; // Goes down to 21.367 after 24,373 seconds after oscillating a lot.
-    // float dampingRatio = -0.2617975f; // Seems to go a tiny bit down over time (less than below).
-    // float dampingRatio = -0.2617970f; // Seems to go slightly down over time.
+    // int substepCount = 32;
+    // float frequency = 100.0f;
+    //
+    // // private float dampingRatio = -0.1f;   // -7.31224203 at 10
+    // // private float dampingRatio = -0.12f;  // -7.70064457 at 10
+    // // private float dampingRatio = -0.15f;  // -8.63272285 at 10
+    // // private float dampingRatio = -0.16f;     // -9.26666541 at 10
+    // // private float dampingRatio = -0.162f;     // -9.50201511 at 10
+    // private float dampingRatio = -0.164f;     // -9.1592 at 10
+    // // private float dampingRatio = -0.17f;  // -43.0916 at 10
+    // // private float dampingRatio = -0.18f;  //  -380.65 at 10
 
     #endregion
 
-    private const float minSpacingDistance = 5f;
+    #region substepCount = 32, frequency = 300.0f
 
-    #region mainMoleculeVelocity = 20f;
+    int substepCount = 32;
+    float frequency = 300.0f;
 
-    // float mainMoleculeVelocity = 20f;
+    // private float dampingRatio = -0.16f;     // -3.36399 at 10
+    // private float dampingRatio = -0.3f;     // -4.18
+    // private float dampingRatio = -0.4f;     // -5.31
+    // private float dampingRatio = -0.45f;     // -6.50771
+    // private float dampingRatio = -0.47f;     // -7.3245
+    // private float dampingRatio = -0.48f;     // -7.97658
+    // private float dampingRatio = -0.49f;     // -9.3712
+    // private float dampingRatio = -0.492f;     // -8.89044
+    // private float dampingRatio = -0.492040f;     // -9.90009594
+    // private float dampingRatio = -0.49204385f;     // -9.99854755
+    // private float dampingRatio = -0.49204389f;     // -9.99932098
+    // private float dampingRatio = -0.492043897f;     // -9.99932098
+
+    /// <summary>
+    /// -0.99968016 at 1
+    /// -1.99956179 at 2
+    /// -5.00001621 at 5
+    /// -10.00008106 at 10
+    /// -20.00013733 at 20
+    /// -21.27953911 at 25
+    /// -68.22762299 at 30
+    /// -29.32084656 at 40
+    /// -15.00469875 at 50
+    /// -136.45524 at 60
+    /// -122.97 at 70
+    /// -117.3966 at 80
+    /// -106.772 at 90
+    /// -97.92951965 at 100
+    /// -18.21 at 200
+    /// </summary>
+    private float dampingRatio = -0.492043898f;
+
+    // private float dampingRatio = -0.4920439f;     // -10.00008106
+    // private float dampingRatio = -0.492044f;     // -10.00237083
+    // private float dampingRatio = -0.492045f;     // -10.02760776
+    // private float dampingRatio = -0.492050f;     // -10.15629959
+    // private float dampingRatio = -0.4921f;     // -11.4655
+    // private float dampingRatio = -0.4922f;     // -14.21
+    // private float dampingRatio = -0.4923f;     // -17.135
+    // private float dampingRatio = -0.493f;     // -43.135
+    // private float dampingRatio = -0.5f;     // -1629 at 10
+
+    #endregion
+
+    #endregion
+
+    // #region Box with molecules
+    //
+    // // All numbers matter here (including the box size, which is not here).
+    // // The negative dampingRatio is the one to tweak to get near energy conservation once all others are fixed.
+    // // The fact that the 6-th digit needs to be flipped shows the very high instability of the system.
+    //
+    // #region r = 2.000
+    //
+    // // const float moleculeRadius = 2.000f;
+    // // const int count = 50;
+    // // const float mainMoleculeVelocity = 20f;
+    // // // float dampingRatio = -0.2618f; // 10 minutes: 50 -> 53.92
+    // // float dampingRatio = -0.261797f;
+    // // // float dampingRatio = -0.261796f;
+    // // // float dampingRatio = -0.261795f; // 10 minutes: 50 -> slightly oscillates down.
+    // // // float dampingRatio = -0.26179f; // 10 minutes: 50 -> 43.3
+    // // // float dampingRatio = -0.26175f; // 10 minutes: 50 -> 38.8
+    //
+    // #endregion
+    //
+    // #region r = 1.000
+    //
     // const float moleculeRadius = 1.000f;
-
-    int velocityIterationCount = 8;
-    int substepCount = 1;
-    // float frequency = 5.0f;
-
-    // // float dampingRatio = -0.2625f;
-    // // float dampingRatio = -0.2623f;
-    // // float dampingRatio = -0.2622f;
-    // // float dampingRatio = -0.2621f;
+    // const int count = 50;
+    // const float mainMoleculeVelocity = 20f;
+    // // float frequency = 5.0f;
+    // // float dampingRatio = -0.261797f; // Seems OK but goes down a little bit over time.
     //
-    // // float dampingRatio = -0.2620f; // 10 minutes: 50 -> 51.31
-    // // float dampingRatio = -0.2619f; // 10 minutes: 50 -> 50.75
-    // float dampingRatio = -0.2618f; // 10 minutes: 50 -> 50.28
+    // // ====================
     //
-    // // float dampingRatio = -0.26179f; // 10 minutes: 50 -> goes below 50
-    // // float dampingRatio = -0.26175f; // 10 minutes: 50 -> goes below 50
-    // // float dampingRatio = -0.2617f; // 10 minutes: 50 -> goes below 50
-
-    #endregion
-
-    #region mainMoleculeVelocity = 50f;
-
-    // const float mainMoleculeVelocity = 50f;
-    // const float moleculeRadius = 0.25f;
+    // float frequency = 30.0f;
+    // private float dampingRatio = -0.5f;
+    //
+    // #endregion
+    //
+    // #region r = 0.500
+    //
+    // // const float moleculeRadius = 0.500f;
+    // // const int count = 50;
+    // // const float mainMoleculeVelocity = 20f;
+    // // float dampingRatio = -0.261797f;
+    //
+    // #endregion
+    //
+    // #region r = 0.250
+    //
+    // // const float moleculeRadius = 0.250f;
+    // // const int count = 50;
+    // // const float mainMoleculeVelocity = 20f;
+    // // float dampingRatio = -0.261797f;
+    //
+    // #endregion
+    //
+    // #region r = 0.125
+    //
+    // // const float moleculeRadius = 0.125f;
+    // // const int count = 50;
+    // // const float mainMoleculeVelocity = 20f;
+    // // float dampingRatio = -0.2617978f;
+    // // float dampingRatio = -0.2617977f; // Goes down to 21.367 after 24,373 seconds after oscillating a lot.
+    // // float dampingRatio = -0.2617975f; // Seems to go a tiny bit down over time (less than below).
+    // // float dampingRatio = -0.2617970f; // Seems to go slightly down over time.
+    //
+    // #endregion
+    //
+    // #region mainMoleculeVelocity = 20f;
+    //
+    // // float mainMoleculeVelocity = 20f;
+    // // const float moleculeRadius = 1.000f;
     //
     // int velocityIterationCount = 8;
     // int substepCount = 1;
-    // float frequency = 5.0f;
-    // float dampingRatio = -0.2618f;
-
-    #endregion
-
-    #endregion
+    // // float frequency = 5.0f;
+    //
+    // // // float dampingRatio = -0.2625f;
+    // // // float dampingRatio = -0.2623f;
+    // // // float dampingRatio = -0.2622f;
+    // // // float dampingRatio = -0.2621f;
+    // //
+    // // // float dampingRatio = -0.2620f; // 10 minutes: 50 -> 51.31
+    // // // float dampingRatio = -0.2619f; // 10 minutes: 50 -> 50.75
+    // // float dampingRatio = -0.2618f; // 10 minutes: 50 -> 50.28
+    // //
+    // // // float dampingRatio = -0.26179f; // 10 minutes: 50 -> goes below 50
+    // // // float dampingRatio = -0.26175f; // 10 minutes: 50 -> goes below 50
+    // // // float dampingRatio = -0.2617f; // 10 minutes: 50 -> goes below 50
+    //
+    // #endregion
+    //
+    // #region mainMoleculeVelocity = 50f;
+    //
+    // // const float mainMoleculeVelocity = 50f;
+    // // const float moleculeRadius = 0.25f;
+    // //
+    // // int velocityIterationCount = 8;
+    // // int substepCount = 1;
+    // // float frequency = 5.0f;
+    // // float dampingRatio = -0.2618f;
+    //
+    // #endregion
+    //
+    // #endregion
 
     #region Physical Parameters
 
@@ -206,9 +321,9 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     #region Planetary Parameters
 
-    static float testVelocityValue = 10f;
+    private static float testVelocityValue = mainMoleculeVelocity / 2;
 
-    static float testOriginValue = 100f;
+    private static float testOriginValue = testVelocityValue * 5;
     Vector3 testOrigin = new Vector3(-testOriginValue, 0, 0);
     Vector3 testOrigin2 = new Vector3(testOriginValue, 0, 0);
     Vector3 testVelocity = new Vector3(testVelocityValue, 0, 0);
@@ -226,6 +341,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
     Random random = new Random(seed);
 
+    // private const float minSpacingDistance = 5f;
     // private static float spacingDistance = Math.Max(3 * moleculeRadius, minSpacingDistance);
     private static float spacingDistance = 0.8f * boxWidthInternal / count;
     private Vector3 spacing = new Vector3(spacingDistance);
@@ -728,7 +844,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
         // Add const fields manually since they have assigned values
         sb.AppendLine($"count, {count}");
-        sb.AppendLine($"minSpacingDistance, {minSpacingDistance}");
+        // sb.AppendLine($"minSpacingDistance, {minSpacingDistance}");
         sb.AppendLine($"moleculeRadius, {moleculeRadius}");
         sb.AppendLine($"testVelocityValue, {testVelocityValue}");
         sb.AppendLine($"testOriginValue, {testOriginValue}");
@@ -847,17 +963,17 @@ public class PlanetNonRotatingMoleculesDemo : Demo
 
         #region Box
 
-        // CreateBox();
+        CreateBox();
 
         #endregion
 
         #region Orbiters
 
-        CreateTestOrbiter();
-        CreateTestOrbiter2();
+        // CreateTestOrbiter();
+        // CreateTestOrbiter2();
 
         // CreateOrbiters();
-        // CreateMolecules();
+        CreateMolecules();
 
         #endregion
     }
@@ -939,7 +1055,7 @@ public class PlanetNonRotatingMoleculesDemo : Demo
         var angular = description.Velocity.Angular;
         var absoluteAngular = Math.Sqrt(angular.X * angular.X + angular.Y * angular.Y + angular.Z * angular.Z);
         var message =
-            $"Velocity: ({velocity.X:F2}, {velocity.Y:F2}, {velocity.Z:F2}), absolute velocity: {absoluteVelocity:F2}, " +
+            $"Velocity: ({velocity.X:F8}, {velocity.Y:F8}, {velocity.Z:F8}), absolute velocity: {absoluteVelocity:F8}, " +
             $"angunar: ({angular.X:F2}, {angular.Y:F2}, {angular.Z:F2}), absolute angular: {absoluteAngular:F2}.";
 
         var bottomY = renderer.Surface.Resolution.Y;
